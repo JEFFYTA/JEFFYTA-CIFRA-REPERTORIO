@@ -15,7 +15,7 @@ import { useRepertoireManagement } from "@/hooks/useRepertoireManagement";
 import { supabase } from "@/integrations/supabase/client";
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
-
+import { transposeChordLine } from "@/lib/chordUtils"; // Importação padrão
 
 const ChordRecognizer = () => {
   const [isViewerOpen, setIsViewerOpen] = useState<boolean>(false);
@@ -84,7 +84,6 @@ const ChordRecognizer = () => {
   const handleTranspose = (delta: number) => {
     if (!outputText) return;
     const lines = outputText.split('\n');
-    const { transposeChordLine } = require("@/lib/chordUtils"); // Import dynamically to avoid circular dependency if chordUtils uses outputText
     const transposedLines = lines.map((line: string) => transposeChordLine(line, delta));
     setOutputText(transposedLines.join('\n'));
     toast.success(`Cifras transpostas em ${delta > 0 ? '+' : ''}${delta} semitons.`);
@@ -264,7 +263,7 @@ const ChordRecognizer = () => {
         open={isSongsPanelOpen}
         onOpenChange={setIsSongsPanelOpen}
         songs={songs}
-        currentSongIndex={currentSongIndex !== null ? songs.findIndex(s => s.id === songs[currentSongIndex]?.id) : null}
+        currentSongIndex={currentSongIndex} {/* Simplificado aqui */}
         newSongTitle={newSongTitle}
         setNewSongTitle={setNewSongTitle}
         handleSaveSong={handleSaveSong}
