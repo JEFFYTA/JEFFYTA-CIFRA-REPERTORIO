@@ -30,20 +30,6 @@ export function extrairCifras(texto: string): string {
             continue;
         }
 
-        // Tratamento especial para a primeira linha não-vazia e não-seção como um possível título
-        if (i === 0 && resultado.length === 0) {
-            const potentialChordsInFirstLine = trim.match(chordRegex) || [];
-            const validChordsInFirstLine = potentialChordsInFirstLine.filter(c => {
-                const raizMatch = c.match(/[CDEFGAB][#b]?/);
-                return raizMatch && notaMap[raizMatch[0]] !== undefined;
-            });
-
-            if (validChordsInFirstLine.length === 0) { // Se não houver cifras, é provavelmente um título
-                resultado.push(trim);
-                continue;
-            }
-        }
-
         // Verificar se a linha contém cifras válidas
         const potentialChords = [...linha.matchAll(chordRegex)]; // Usar matchAll para obter todas as ocorrências
         const validChordsWithIndices = potentialChords.filter(match => {
@@ -92,6 +78,40 @@ export function extrairCifras(texto: string): string {
     }
 
     return cleanedResult.join('\n');
+}
+
+export function extractSongTitle(text: string): string {
+    const lines = text.split('\n');
+    const chordRegex = /([CDEFGAB][#b]?)(m|°)?(6|7|7M|7\(9-\)|7\(9\)|7\(4\)|9|11|13|13-|add9|sus4)?(\/[CDEFGAB][#b]?)?/g;
+
+    for (const line of lines) {
+        const trim = line.trim();
+        // Ignorar linhas vazias ou cabeçalhos de seção
+        if (!trim || /^\[.*\]$|^\(.*\)$|^{.*}$/.test(trim)) {
+            continue;
+        }
+
+        // Verificar se a linha é predominantemente uma linha de cifra
+        const potentialChords = [...trim.matchAll(chordRegex)];
+        const validChords = potentialChords.filter(match => {
+            const raizMatch = match[1].match(/[CDEFGAB][#b]?/);
+            return raizMatch && notaMap[raizMatch[0]] !== undefined;
+        });
+
+        // Heurística: se mais de 50% da linha (em caracteres) é composta por cifras válidas,
+        // ou se há muitas cifras e poucas palavras, provavelmente é uma linha de cifra.
+        const totalChordLength = validChords.reduce((sum, match) => sum + match[0].length, 0);
+        const nonChordTextLength = trim.length - totalChordLength;
+
+        if (validChords.length > 0 && (totalChordLength / trim.length > 0.5 || (validChords.length > 2 && nonChordTextLength < 5))) {
+            continue; // Pular, provavelmente é uma linha de cifra
+        }
+
+        // Se chegou aqui, é uma linha não vazia, não é cabeçalho de seção e não é predominantemente cifra.
+        // Consideramos como título.
+        return trim;
+    }
+    return ''; // Nenhum título encontrado
 }
 
 export function transposeChordLine(line: string, delta: number): string {

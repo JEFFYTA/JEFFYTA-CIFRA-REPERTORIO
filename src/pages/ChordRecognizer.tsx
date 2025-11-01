@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { extrairCifras, transposeChordLine } from "@/lib/chordUtils";
+import { extrairCifras, transposeChordLine, extractSongTitle } from "@/lib/chordUtils"; // Importar extractSongTitle
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Save, Trash2, Maximize2, Minimize2, Copy, PlusCircle, Music, ListMusic, Search } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -91,6 +91,13 @@ const ChordRecognizer = () => {
 
   useEffect(() => {
     processInput(inputText);
+    // NOVO: Extrair título quando inputText muda
+    const detectedTitle = extractSongTitle(inputText);
+    if (detectedTitle) {
+      setNewSongTitle(detectedTitle);
+    } else {
+      setNewSongTitle(''); // Limpar se nenhum título for detectado
+    }
   }, [inputText, processInput]);
 
   const handleClear = () => {
