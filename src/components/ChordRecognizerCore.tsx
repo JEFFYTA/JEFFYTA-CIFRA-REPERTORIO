@@ -60,7 +60,7 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
             <Button onClick={() => onTranspose(1)} className="bg-green-600 hover:bg-green-700 text-white">Transpor +1</Button>
             <Button onClick={() => onTranspose(-1)} className="bg-red-600 hover:bg-red-700 text-white">Transpor -1</Button>
             <Button onClick={onRestore} className="bg-blue-600 hover:bg-blue-700 text-white">Restaurar</Button>
-            <Button onClick={onCopyToClipboard} disabled={!outputText.trim()} variant="outline">
+            <Button onClick={onCopyToClipboard} disabled={!outputText || outputText.trim() === ''} variant="outline">
               <Copy className="mr-2 h-4 w-4" /> Copiar
             </Button>
             <Button
