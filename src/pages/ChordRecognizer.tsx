@@ -45,6 +45,7 @@ const ChordRecognizer = () => {
   const [isViewerOpen, setIsViewerOpen] = useState<boolean>(false);
   const [viewerTransposeDelta, setViewerTransposeDelta] = useState<number>(0);
   const [viewerSearchTerm, setViewerSearchTerm] = useState<string>('');
+  const [showSearchResults, setShowSearchResults] = useState<boolean>(false); // NOVO ESTADO
 
   const [repertoires, setRepertoires] = useState<Repertoire[]>([]);
   const [selectedRepertoireId, setSelectedRepertoireId] = useState<string | null>(null);
@@ -57,7 +58,7 @@ const ChordRecognizer = () => {
   
   const [viewerNavigableSongs, setViewerNavigableSongs] = useState<Song[]>([]);
   const [currentViewerSongIndex, setCurrentViewerSongIndex] = useState<number>(0);
-  const [activeViewerSongId, setActiveViewerSongId] = useState<string | null>(null); // NOVO ESTADO
+  const [activeViewerSongId, setActiveViewerSongId] = useState<string | null>(null);
 
   const selectedRepertoire = selectedRepertoireId
     ? repertoires.find(rep => rep.id === selectedRepertoireId)
@@ -198,6 +199,7 @@ const ChordRecognizer = () => {
       setCurrentViewerSongIndex(index);
     }
     setViewerTransposeDelta(0); // Reseta a transposição para a nova música
+    setShowSearchResults(false); // Oculta a lista de resultados após a seleção
   };
 
   const handleNextSong = () => {
@@ -329,6 +331,7 @@ const ChordRecognizer = () => {
     setViewerTransposeDelta(0);
     setViewerSearchTerm(''); // Reset search when opening repertoire viewer
     setActiveViewerSongId(null); // Garante que nenhuma música esteja ativa inicialmente
+    setShowSearchResults(true); // Mostra a lista de resultados ao abrir o visualizador de repertório
 
     prepareViewerSongs('', true); 
 
@@ -344,6 +347,7 @@ const ChordRecognizer = () => {
     setViewerNavigableSongs([]); // Reset navigable songs
     setCurrentViewerSongIndex(0); // Reset current index
     setActiveViewerSongId(null); // Reset active song
+    setShowSearchResults(false); // Garante que a lista de resultados esteja oculta ao fechar
   };
 
   return (
@@ -390,6 +394,7 @@ const ChordRecognizer = () => {
                   setViewerNavigableSongs([]); // Start with an empty list
                   setCurrentViewerSongIndex(0); // Reset index
                   setActiveViewerSongId(null); // Reset active song
+                  setShowSearchResults(true); // Mostra a lista de resultados ao abrir
                 } else { // When dialog is closing
                   handleCloseViewer(); // Ensure all viewer states are reset
                 }
@@ -416,11 +421,14 @@ const ChordRecognizer = () => {
                     <Input
                       placeholder="Buscar músicas na tela cheia..."
                       value={viewerSearchTerm}
-                      onChange={(e) => setViewerSearchTerm(e.target.value)}
+                      onChange={(e) => {
+                        setViewerSearchTerm(e.target.value);
+                        setShowSearchResults(true); // Mostra a lista de resultados ao digitar
+                      }}
                       className="pl-9 w-full"
                     />
                   </div>
-                  {viewerSearchTerm.trim() !== '' && viewerNavigableSongs.length > 0 && (
+                  {showSearchResults && viewerSearchTerm.trim() !== '' && viewerNavigableSongs.length > 0 && (
                       <ScrollArea className="mt-2 h-40 border rounded-md">
                           <div className="p-2 space-y-1">
                               {viewerNavigableSongs.map((song) => (
@@ -439,7 +447,7 @@ const ChordRecognizer = () => {
                           </div>
                       </ScrollArea>
                   )}
-                  {viewerSearchTerm.trim() !== '' && viewerNavigableSongs.length === 0 && (
+                  {showSearchResults && viewerSearchTerm.trim() !== '' && viewerNavigableSongs.length === 0 && (
                       <p className="text-center text-gray-500 dark:text-gray-400 mt-2">Nenhuma música encontrada.</p>
                   )}
                 </div>
