@@ -5,8 +5,9 @@ export const notaMap: { [key: string]: number } = {
     'A#': 10, 'Bb': 10, 'B': 11
 };
 
-export function extrairCifras(texto: string): string {
-    const linhas = texto.split('\n');
+export function extrairCifras(texto: string | null | undefined): string {
+    const safeText = typeof texto === 'string' ? texto : '';
+    const linhas = safeText.split('\n');
     let resultado: string[] = [];
 
     // Regex para encontrar padrões de cifra comuns, incluindo baixo invertido
@@ -80,8 +81,9 @@ export function extrairCifras(texto: string): string {
     return cleanedResult.join('\n');
 }
 
-export function extractSongTitle(text: string): string {
-    const lines = text.split('\n');
+export function extractSongTitle(text: string | null | undefined): string {
+    const safeText = typeof text === 'string' ? text : '';
+    const lines = safeText.split('\n');
     const chordRegex = /([CDEFGAB][#b]?)(m|°)?(6|7|7M|7\(9-\)|7\(9\)|7\(4\)|9|11|13|13-|add9|sus4)?(\/[CDEFGAB][#b]?)?/g;
 
     for (const line of lines) {
@@ -114,11 +116,12 @@ export function extractSongTitle(text: string): string {
     return ''; // Nenhum título encontrado
 }
 
-export function transposeChordLine(line: string, delta: number): string {
-    const trim = line.trim();
+export function transposeChordLine(line: string | null | undefined, delta: number): string {
+    const safeLine = typeof line === 'string' ? line : '';
+    const trim = safeLine.trim();
     // Não transpor cabeçalhos de seção ou linhas em branco
     if (!trim || /^\[.*\]$|^\(.*\)$|^{.*}$/.test(trim)) {
-        return line;
+        return safeLine;
     }
 
     // Regex para capturar raiz, tipo (m/°), extensões e baixo invertido
@@ -126,7 +129,7 @@ export function transposeChordLine(line: string, delta: number): string {
     const chordPartRegex = /^([CDEFGAB][#b]?)(m|°)?(6|7|7M|7\(9-\)|7\(9\)|7\(4\)|9|11|13|13-|add9|sus4)?(\/[CDEFGAB][#b]?)?$/;
 
     // Dividir a linha por espaços para lidar com múltiplas cifras em uma linha
-    const parts = line.split(/(\s+)/); // Manter delimitadores para preservar o espaçamento
+    const parts = safeLine.split(/(\s+)/); // Manter delimitadores para preservar o espaçamento
 
     const transposedParts = parts.map(p => {
         // Processar apenas se não for apenas espaço em branco
