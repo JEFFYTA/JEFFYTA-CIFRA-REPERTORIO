@@ -7,10 +7,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { extrairCifras, transposeChordLine } from "@/lib/chordUtils";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { toast } from "sonner";
-import { Fullscreen, ChevronLeft, ChevronRight, Plus, Save, Trash2, Maximize2, Minimize2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save, Trash2, Maximize2, Minimize2, Copy } from 'lucide-react';
+import { cn } from "@/lib/utils"; // Import cn for conditional class names
 
 interface Song {
   id: string;
@@ -145,6 +157,16 @@ const ChordRecognizer = () => {
     return outputText; // Fallback to current output if no song is selected
   };
 
+  const handleCopyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(outputText);
+      toast.success("Cifras copiadas para a área de transferência!");
+    } catch (err) {
+      console.error("Failed to copy text: ", err);
+      toast.error("Falha ao copiar cifras.");
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col lg:flex-row gap-6 p-4 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
       <Card className="flex-1 flex flex-col shadow-lg">
@@ -175,6 +197,9 @@ const ChordRecognizer = () => {
             <Button onClick={() => handleTranspose(1)} className="bg-green-600 hover:bg-green-700 text-white">Transpor +1</Button>
             <Button onClick={() => handleTranspose(-1)} className="bg-red-600 hover:bg-red-700 text-white">Transpor -1</Button>
             <Button onClick={handleRestore} className="bg-blue-600 hover:bg-blue-700 text-white">Restaurar</Button>
+            <Button onClick={handleCopyToClipboard} disabled={!outputText.trim()} variant="outline">
+              <Copy className="mr-2 h-4 w-4" /> Copiar
+            </Button>
             <Dialog open={isViewerOpen} onOpenChange={setIsViewerOpen}>
               <DialogTrigger asChild>
                 <Button
@@ -262,7 +287,13 @@ const ChordRecognizer = () => {
             ) : (
               <div className="space-y-2">
                 {songs.map((song, index) => (
-                  <div key={song.id} className="flex items-center justify-between p-2 border rounded-md bg-white dark:bg-gray-700 shadow-sm">
+                  <div
+                    key={song.id}
+                    className={cn(
+                      "flex items-center justify-between p-2 border rounded-md bg-white dark:bg-gray-700 shadow-sm",
+                      currentSongIndex === index && "bg-blue-50 dark:bg-blue-900 border-blue-500 ring-2 ring-blue-500" // Highlight class
+                    )}
+                  >
                     <span className="font-medium truncate">{song.title}</span>
                     <div className="flex gap-1">
                       <Button
@@ -273,14 +304,31 @@ const ChordRecognizer = () => {
                       >
                         Carregar
                       </Button>
-                      <Button
-                        onClick={() => handleDeleteSong(song.id)}
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta ação não pode ser desfeita. Isso excluirá permanentemente a música "{song.title}".
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteSong(song.id)}>
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 ))}
