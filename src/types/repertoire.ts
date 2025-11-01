@@ -1,5 +1,7 @@
 export interface Repertoire {
   id: string;
+  user_id: string; // Adicionado para RLS
   name: string;
-  songIds: string[]; // Array of song IDs
+  songIds: string[]; // Array de IDs de músicas
+  created_at: string; // Adicionado para ordenação e persistência
 }

@@ -1,48 +1,93 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from "sonner";
 import { Repertoire } from "@/types/repertoire";
-import { Song } from "@/types/song"; // Assumindo que você terá um tipo Song global
+import { Song } from "@/types/song";
+import { supabase } from "@/integrations/supabase/client"; // Importar o cliente Supabase
 
 interface UseRepertoireManagementProps {
   songs: Song[];
-  setSongs: React.Dispatch<React.SetStateAction<Song[]>>;
 }
 
-export const useRepertoireManagement = ({ songs, setSongs }: UseRepertoireManagementProps) => {
+export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps) => {
   const [repertoires, setRepertoires] = useState<Repertoire[]>([]);
   const [selectedRepertoireId, setSelectedRepertoireId] = useState<string | null>(null);
   const [newRepertoireName, setNewRepertoireName] = useState<string>('');
+  const [loadingRepertoires, setLoadingRepertoires] = useState<boolean>(true);
 
   const selectedRepertoire = selectedRepertoireId
     ? repertoires.find(rep => rep.id === selectedRepertoireId)
     : null;
 
-  useEffect(() => {
-    const storedRepertoires = localStorage.getItem('chordRecognizerRepertoires');
-    if (storedRepertoires) {
-      setRepertoires(JSON.parse(storedRepertoires));
+  const fetchRepertoires = useCallback(async () => {
+    setLoadingRepertoires(true);
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      setRepertoires([]);
+      setLoadingRepertoires(false);
+      return;
     }
+
+    const { data, error } = await supabase
+      .from('repertoires')
+      .select('*')
+      .eq('user_id', user.user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      toast.error("Erro ao carregar repertórios: " + error.message);
+      console.error("Erro ao carregar repertórios:", error);
+    } else {
+      setRepertoires(data || []);
+    }
+    setLoadingRepertoires(false);
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('chordRecognizerRepertoires', JSON.stringify(repertoires));
-  }, [repertoires]);
+    fetchRepertoires();
+    // Adicionar um listener para mudanças de autenticação para recarregar os repertórios
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        fetchRepertoires();
+      }
+    });
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [fetchRepertoires]);
 
-  const handleCreateRepertoire = () => {
+  const handleCreateRepertoire = async () => {
     if (!newRepertoireName.trim()) {
       toast.error("Por favor, insira um nome para o repertório.");
       return;
     }
-    const newRep: Repertoire = {
-      id: Date.now().toString(),
+
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      toast.error("Você precisa estar logado para criar repertórios.");
+      return;
+    }
+
+    const newRepData = {
+      user_id: user.user.id,
       name: newRepertoireName.trim(),
-      songIds: [],
+      song_ids: [],
     };
-    setRepertoires(prev => [...prev, newRep]);
-    setNewRepertoireName('');
-    toast.success(`Repertório "${newRep.name}" criado!`);
+
+    const { data, error } = await supabase
+      .from('repertoires')
+      .insert([newRepData])
+      .select();
+
+    if (error) {
+      toast.error("Erro ao criar repertório: " + error.message);
+      console.error("Erro ao criar repertório:", error);
+    } else if (data && data.length > 0) {
+      setRepertoires(prev => [...prev, data[0]]);
+      setNewRepertoireName('');
+      toast.success(`Repertório "${data[0].name}" criado!`);
+    }
   };
 
   const handleSelectRepertoire = (id: string | null) => {
@@ -55,33 +100,71 @@ export const useRepertoireManagement = ({ songs, setSongs }: UseRepertoireManage
     }
   };
 
-  const handleDeleteRepertoire = (id: string) => {
-    setRepertoires(prev => prev.filter(rep => rep.id !== id));
-    if (selectedRepertoireId === id) {
-      setSelectedRepertoireId(null);
+  const handleDeleteRepertoire = async (id: string) => {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      toast.error("Você precisa estar logado para excluir repertórios.");
+      return;
     }
-    toast.success("Repertório excluído.");
+
+    const { error } = await supabase
+      .from('repertoires')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.user.id);
+
+    if (error) {
+      toast.error("Erro ao excluir repertório: " + error.message);
+      console.error("Erro ao excluir repertório:", error);
+    } else {
+      setRepertoires(prev => prev.filter(rep => rep.id !== id));
+      if (selectedRepertoireId === id) {
+        setSelectedRepertoireId(null);
+      }
+      toast.success("Repertório excluído.");
+    }
   };
 
-  const handleToggleSongInRepertoire = (songId: string, isChecked: boolean) => {
+  const handleToggleSongInRepertoire = async (songId: string, isChecked: boolean) => {
     if (!selectedRepertoireId) return;
 
-    setRepertoires(prev => prev.map(rep => {
-      if (rep.id === selectedRepertoireId) {
-        const newSongIds = isChecked
-          ? [...new Set([...rep.songIds, songId])]
-          : rep.songIds.filter(id => id !== songId);
-        return { ...rep, songIds: newSongIds };
-      }
-      return rep;
-    }));
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      toast.error("Você precisa estar logado para modificar repertórios.");
+      return;
+    }
 
-    const songTitle = songs.find(s => s.id === songId)?.title || "Música";
-    const repertoireName = repertoires.find(rep => rep.id === selectedRepertoireId)?.name || "repertório";
-    if (isChecked) {
-      toast.success(`"${songTitle}" adicionada ao repertório "${repertoireName}".`);
+    const currentRepertoire = repertoires.find(rep => rep.id === selectedRepertoireId);
+    if (!currentRepertoire) return;
+
+    const newSongIds = isChecked
+      ? [...new Set([...currentRepertoire.songIds, songId])]
+      : currentRepertoire.songIds.filter(id => id !== songId);
+
+    const { error } = await supabase
+      .from('repertoires')
+      .update({ song_ids: newSongIds, updated_at: new Date().toISOString() })
+      .eq('id', selectedRepertoireId)
+      .eq('user_id', user.user.id);
+
+    if (error) {
+      toast.error("Erro ao atualizar repertório: " + error.message);
+      console.error("Erro ao atualizar repertório:", error);
     } else {
-      toast.info(`"${songTitle}" removida do repertório "${repertoireName}".`);
+      setRepertoires(prev => prev.map(rep => {
+        if (rep.id === selectedRepertoireId) {
+          return { ...rep, songIds: newSongIds };
+        }
+        return rep;
+      }));
+
+      const songTitle = songs.find(s => s.id === songId)?.title || "Música";
+      const repertoireName = currentRepertoire.name;
+      if (isChecked) {
+        toast.success(`"${songTitle}" adicionada ao repertório "${repertoireName}".`);
+      } else {
+        toast.info(`"${songTitle}" removida do repertório "${repertoireName}".`);
+      }
     }
   };
 
@@ -97,5 +180,6 @@ export const useRepertoireManagement = ({ songs, setSongs }: UseRepertoireManage
     handleSelectRepertoire,
     handleDeleteRepertoire,
     handleToggleSongInRepertoire,
+    loadingRepertoires,
   };
 };

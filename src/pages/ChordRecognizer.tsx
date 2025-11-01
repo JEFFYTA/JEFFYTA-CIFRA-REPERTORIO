@@ -22,14 +22,17 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { transposeChordLine } from "@/lib/chordUtils";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Save, Trash2, Maximize2, Minimize2, Copy, PlusCircle, Music, ListMusic, Search, ZoomIn, ZoomOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save, Trash2, Maximize2, Minimize2, Copy, PlusCircle, Music, ListMusic, Search, ZoomIn, ZoomOut, Loader2 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Repertoire } from "@/types/repertoire";
-import { Song } from "@/types/song"; // Importar o tipo Song
+import { Song } from "@/types/song";
 import MySongsPanel from "@/components/MySongsPanel";
 import MyRepertoiresPanel from "@/components/MyRepertoiresPanel";
 import { useSongManagement } from "@/hooks/useSongManagement";
 import { useRepertoireManagement } from "@/hooks/useRepertoireManagement";
+import { supabase } from "@/integrations/supabase/client"; // Importar o cliente Supabase
+import { Auth } from '@supabase/auth-ui-react';
+import { ThemeSupa } from '@supabase/auth-ui-shared';
 
 
 const ChordRecognizer = () => {
@@ -37,8 +40,8 @@ const ChordRecognizer = () => {
   const [viewerTransposeDelta, setViewerTransposeDelta] = useState<number>(0);
   const [viewerSearchTerm, setViewerSearchTerm] = useState<string>('');
   const [showSearchResults, setShowSearchResults] = useState<boolean>(false);
-  const [viewerFontSize, setViewerFontSize] = useState<number>(1.2); // Estado para o tamanho da fonte do visualizador
-  const [viewerEditedContent, setViewerEditedContent] = useState<string>(''); // Novo estado para o conteúdo editável do visualizador
+  const [viewerFontSize, setViewerFontSize] = useState<number>(1.2);
+  const [viewerEditedContent, setViewerEditedContent] = useState<string>('');
 
   const [isSongsPanelOpen, setIsSongsPanelOpen] = useState<boolean>(false);
   const [isRepertoiresPanelOpen, setIsRepertoiresPanelOpen] = useState<boolean>(false);
@@ -49,6 +52,22 @@ const ChordRecognizer = () => {
   const [currentViewerSongIndex, setCurrentViewerSongIndex] = useState<number>(0);
   const [activeViewerSongId, setActiveViewerSongId] = useState<string | null>(null);
 
+  const [session, setSession] = useState<any>(null); // Estado para a sessão do usuário
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   // Usando o hook useSongManagement
   const {
     inputText,
@@ -58,7 +77,7 @@ const ChordRecognizer = () => {
     originalOutputText,
     setOriginalOutputText,
     songs,
-    setSongs, // Passar setSongs para o hook de repertório
+    setSongs,
     currentSongIndex,
     newSongTitle,
     setNewSongTitle,
@@ -66,6 +85,8 @@ const ChordRecognizer = () => {
     handleSaveSong,
     handleLoadSong,
     handleDeleteSong,
+    handleUpdateSongChords, // Nova função para atualizar cifras
+    loadingSongs,
   } = useSongManagement({
     initialInputText: '',
     onInputTextChange: (text) => { /* No-op, handled internally by hook */ }
@@ -74,7 +95,6 @@ const ChordRecognizer = () => {
   // Usando o hook useRepertoireManagement
   const {
     repertoires,
-    setRepertoires, // Passar setRepertoires para o hook de músicas se necessário (não é o caso aqui)
     selectedRepertoireId,
     setSelectedRepertoireId,
     newRepertoireName,
@@ -84,7 +104,8 @@ const ChordRecognizer = () => {
     handleSelectRepertoire,
     handleDeleteRepertoire,
     handleToggleSongInRepertoire,
-  } = useRepertoireManagement({ songs, setSongs }); // Passar songs e setSongs para o hook de repertório
+    loadingRepertoires,
+  } = useRepertoireManagement({ songs });
 
   const handleTranspose = (delta: number) => {
     if (!outputText) return;
@@ -125,8 +146,6 @@ const ChordRecognizer = () => {
   useEffect(() => {
     if (isViewerOpen) {
       prepareViewerSongs(viewerSearchTerm, isRepertoireViewerActive);
-      // REMOVIDO: O bloco de código que limpava viewerEditedContent indevidamente.
-      // A limpeza inicial e a definição do conteúdo agora são tratadas em onOpenChange e handleSelectViewerSong/handleOpenRepertoireViewer.
     }
   }, [viewerSearchTerm, isViewerOpen, isRepertoireViewerActive, prepareViewerSongs]);
 
@@ -135,7 +154,7 @@ const ChordRecognizer = () => {
     const index = viewerNavigableSongs.findIndex(s => s.id === songId);
     if (index !== -1) {
       setCurrentViewerSongIndex(index);
-      setViewerEditedContent(viewerNavigableSongs[index].extractedChords); // Inicializar conteúdo editável
+      setViewerEditedContent(viewerNavigableSongs[index].extractedChords);
     }
     setViewerTransposeDelta(0);
     setShowSearchResults(false);
@@ -148,7 +167,7 @@ const ChordRecognizer = () => {
     setActiveViewerSongId(nextSong.id);
     setCurrentViewerSongIndex(nextIndex);
     setViewerTransposeDelta(0);
-    setViewerEditedContent(nextSong.extractedChords); // Inicializar conteúdo editável
+    setViewerEditedContent(nextSong.extractedChords);
   };
 
   const handlePreviousSong = () => {
@@ -158,7 +177,7 @@ const ChordRecognizer = () => {
     setActiveViewerSongId(prevSong.id);
     setCurrentViewerSongIndex(prevIndex);
     setViewerTransposeDelta(0);
-    setViewerEditedContent(prevSong.extractedChords); // Inicializar conteúdo editável
+    setViewerEditedContent(prevSong.extractedChords);
   };
 
   const getViewerContent = () => {
@@ -175,7 +194,6 @@ const ChordRecognizer = () => {
       return '';
     }
 
-    // O conteúdo base para exibição é o que está sendo editado
     let contentToDisplay = viewerEditedContent;
 
     if (contentToDisplay) {
@@ -227,7 +245,7 @@ const ChordRecognizer = () => {
     setViewerTransposeDelta(0);
     setViewerSearchTerm('');
     setShowSearchResults(false);
-    setViewerFontSize(1.2); // Resetar zoom ao abrir
+    setViewerFontSize(1.2);
 
     const repertoireSongs = rep.songIds
       .map(id => songs.find(s => s.id === id))
@@ -239,11 +257,11 @@ const ChordRecognizer = () => {
     if (repertoireSongs.length > 0) {
       setActiveViewerSongId(repertoireSongs[0].id);
       setCurrentViewerSongIndex(0);
-      setViewerEditedContent(repertoireSongs[0].extractedChords); // Inicializar conteúdo editável
+      setViewerEditedContent(repertoireSongs[0].extractedChords);
     } else {
       setActiveViewerSongId(null);
       setCurrentViewerSongIndex(0);
-      setViewerEditedContent(''); // Limpar se não houver músicas
+      setViewerEditedContent('');
     }
 
     setIsViewerOpen(true);
@@ -259,16 +277,16 @@ const ChordRecognizer = () => {
     setCurrentViewerSongIndex(0);
     setActiveViewerSongId(null);
     setShowSearchResults(false);
-    setViewerFontSize(1.2); // Resetar zoom ao fechar
-    setViewerEditedContent(''); // Limpar conteúdo editável
+    setViewerFontSize(1.2);
+    setViewerEditedContent('');
   };
 
   const handleZoomIn = () => {
-    setViewerFontSize(prev => Math.min(prev + 0.1, 2.5)); // Limite máximo de zoom
+    setViewerFontSize(prev => Math.min(prev + 0.1, 2.5));
   };
 
   const handleZoomOut = () => {
-    setViewerFontSize(prev => Math.max(prev - 0.1, 0.8)); // Limite mínimo de zoom
+    setViewerFontSize(prev => Math.max(prev - 0.1, 0.8));
   };
 
   const handleViewerContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -276,15 +294,7 @@ const ChordRecognizer = () => {
     setViewerEditedContent(newContent);
 
     if (activeViewerSongId) {
-      setSongs(prevSongs =>
-        prevSongs.map(song =>
-          song.id === activeViewerSongId
-            ? { ...song, extractedChords: newContent }
-            : song
-        )
-      );
-      // Não exibe toast a cada keystroke para evitar spam, mas a mudança é salva.
-      // Se quiser feedback visual, pode adicionar um pequeno indicador de "salvo".
+      handleUpdateSongChords(activeViewerSongId, newContent); // Usar a função do hook
     }
   };
 
@@ -294,19 +304,43 @@ const ChordRecognizer = () => {
       return;
     }
 
-    const currentTransposedContent = getViewerContent(); // Pega o conteúdo já transposto
-    setViewerEditedContent(currentTransposedContent); // Atualiza o conteúdo editável com a versão transposta
-    setViewerTransposeDelta(0); // Reseta o delta, pois a transposição agora está "incorporada"
+    const currentTransposedContent = getViewerContent();
+    setViewerEditedContent(currentTransposedContent);
+    setViewerTransposeDelta(0);
 
-    setSongs(prevSongs =>
-      prevSongs.map(song =>
-        song.id === activeViewerSongId
-          ? { ...song, extractedChords: currentTransposedContent }
-          : song
-      )
-    );
+    handleUpdateSongChords(activeViewerSongId, currentTransposedContent); // Usar a função do hook
     toast.success("Transposição salva com sucesso!");
   };
+
+  if (!session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <Card className="w-full max-w-md p-8 shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">Faça login para usar o Reconhecedor de Cifras</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Auth
+              supabaseClient={supabase}
+              providers={[]}
+              appearance={{
+                theme: ThemeSupa,
+                variables: {
+                  default: {
+                    colors: {
+                      brand: 'hsl(var(--primary))',
+                      brandAccent: 'hsl(var(--primary-foreground))',
+                    },
+                  },
+                },
+              }}
+              theme="light"
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col lg:flex-row gap-6 p-4 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
@@ -318,6 +352,7 @@ const ChordRecognizer = () => {
           <div className="flex flex-wrap gap-2 mb-4 items-center">
             <label htmlFor="inputMusica" className="font-semibold text-lg">Entrada de Música</label>
             <Button onClick={handleClear} variant="destructive" className="ml-auto">Limpar</Button>
+            <Button onClick={() => supabase.auth.signOut()} variant="outline">Sair</Button>
           </div>
           <Textarea
             id="inputMusica"
@@ -353,8 +388,8 @@ const ChordRecognizer = () => {
                   setCurrentViewerSongIndex(0); 
                   setActiveViewerSongId(null); 
                   setShowSearchResults(false);
-                  setViewerFontSize(1.2); // Resetar zoom ao abrir
-                  setViewerEditedContent(''); // Limpar ao abrir
+                  setViewerFontSize(1.2);
+                  setViewerEditedContent('');
                 } else {
                   handleCloseViewer(); 
                 }
@@ -419,7 +454,7 @@ const ChordRecognizer = () => {
                     onChange={handleViewerContentChange}
                     className="w-full h-full resize-none border-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
                     style={{ fontSize: `${viewerFontSize}rem` }}
-                    disabled={!activeViewerSongId} // Desabilita edição se nenhuma música estiver selecionada
+                    disabled={!activeViewerSongId}
                   />
                 </div>
                 <div className="flex flex-wrap justify-center gap-2 p-4 border-t dark:border-gray-700">
@@ -475,11 +510,11 @@ const ChordRecognizer = () => {
       </Card>
 
       <div className="w-full lg:w-auto flex lg:flex-col gap-4 justify-center lg:justify-start">
-        <Button onClick={() => setIsSongsPanelOpen(true)} className="w-full lg:w-auto">
-          <Music className="mr-2 h-4 w-4" /> Minhas Músicas
+        <Button onClick={() => setIsSongsPanelOpen(true)} className="w-full lg:w-auto" disabled={loadingSongs}>
+          {loadingSongs ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Music className="mr-2 h-4 w-4" />} Minhas Músicas
         </Button>
-        <Button onClick={() => setIsRepertoiresPanelOpen(true)} className="w-full lg:w-auto">
-          <ListMusic className="mr-2 h-4 w-4" /> Meus Repertórios
+        <Button onClick={() => setIsRepertoiresPanelOpen(true)} className="w-full lg:w-auto" disabled={loadingRepertoires}>
+          {loadingRepertoires ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ListMusic className="mr-2 h-4 w-4" />} Meus Repertórios
         </Button>
       </div>
 
@@ -487,7 +522,7 @@ const ChordRecognizer = () => {
         open={isSongsPanelOpen}
         onOpenChange={setIsSongsPanelOpen}
         songs={songs}
-        currentSongIndex={currentSongIndex}
+        currentSongIndex={currentSongIndex !== null ? songs.findIndex(s => s.id === songs[currentSongIndex]?.id) : null}
         newSongTitle={newSongTitle}
         setNewSongTitle={setNewSongTitle}
         handleSaveSong={handleSaveSong}

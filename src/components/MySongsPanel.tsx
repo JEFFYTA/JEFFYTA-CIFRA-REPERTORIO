@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react'; // Importar useState
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,16 +19,10 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Save, Trash2, Search } from 'lucide-react'; // Importar o ícone Search
+import { Save, Trash2, Search } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Repertoire } from "@/types/repertoire";
-
-interface Song {
-  id: string;
-  title: string;
-  originalContent: string;
-  extractedChords: string;
-}
+import { Song } from "@/types/song"; // Importar o tipo Song
 
 interface MySongsPanelProps {
   open: boolean;
@@ -38,7 +32,7 @@ interface MySongsPanelProps {
   newSongTitle: string;
   setNewSongTitle: (title: string) => void;
   handleSaveSong: () => void;
-  handleLoadSong: (index: number) => void;
+  handleLoadSong: (id: string) => void; // Alterado para receber ID
   handleDeleteSong: (id: string) => void;
   selectedRepertoireId: string | null;
   selectedRepertoire: Repertoire | null;
@@ -129,7 +123,7 @@ const MySongsPanel: React.FC<MySongsPanelProps> = ({
                         </div>
                       )}
                       <Button
-                        onClick={() => handleLoadSong(songs.findIndex(s => s.id === song.id))} // Encontrar o índice original
+                        onClick={() => handleLoadSong(song.id)} // Passar o ID da música
                         variant="ghost"
                         size="sm"
                         className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"

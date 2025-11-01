@@ -17,7 +17,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { PlusCircle, Trash2, Play } from 'lucide-react'; // Importar o ícone Play
+import { PlusCircle, Trash2, Play } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Repertoire } from "@/types/repertoire";
 
@@ -32,7 +32,7 @@ interface MyRepertoiresPanelProps {
   handleCreateRepertoire: () => void;
   handleSelectRepertoire: (id: string | null) => void;
   handleDeleteRepertoire: (id: string) => void;
-  handleOpenRepertoireViewer: () => void; // Nova prop
+  handleOpenRepertoireViewer: () => void;
 }
 
 const MyRepertoiresPanel: React.FC<MyRepertoiresPanelProps> = ({
@@ -46,7 +46,7 @@ const MyRepertoiresPanel: React.FC<MyRepertoiresPanelProps> = ({
   handleCreateRepertoire,
   handleSelectRepertoire,
   handleDeleteRepertoire,
-  handleOpenRepertoireViewer, // Usar a nova prop
+  handleOpenRepertoireViewer,
 }) => {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

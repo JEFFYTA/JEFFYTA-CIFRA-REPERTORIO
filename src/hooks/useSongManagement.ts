@@ -3,13 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from "sonner";
 import { extrairCifras, extractSongTitle } from "@/lib/chordUtils";
-
-interface Song {
-  id: string;
-  title: string;
-  originalContent: string;
-  extractedChords: string;
-}
+import { supabase } from "@/integrations/supabase/client"; // Importar o cliente Supabase
+import { Song } from "@/types/song"; // Importar o tipo Song
 
 interface UseSongManagementProps {
   initialInputText: string;
@@ -23,17 +18,44 @@ export const useSongManagement = ({ initialInputText, onInputTextChange }: UseSo
   const [songs, setSongs] = useState<Song[]>([]);
   const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
   const [newSongTitle, setNewSongTitle] = useState<string>('');
+  const [loadingSongs, setLoadingSongs] = useState<boolean>(true);
 
-  useEffect(() => {
-    const storedSongs = localStorage.getItem('chordRecognizerSongs');
-    if (storedSongs) {
-      setSongs(JSON.parse(storedSongs));
+  const fetchSongs = useCallback(async () => {
+    setLoadingSongs(true);
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      setSongs([]);
+      setLoadingSongs(false);
+      return;
     }
+
+    const { data, error } = await supabase
+      .from('songs')
+      .select('*')
+      .eq('user_id', user.user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      toast.error("Erro ao carregar músicas: " + error.message);
+      console.error("Erro ao carregar músicas:", error);
+    } else {
+      setSongs(data || []);
+    }
+    setLoadingSongs(false);
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('chordRecognizerSongs', JSON.stringify(songs));
-  }, [songs]);
+    fetchSongs();
+    // Adicionar um listener para mudanças de autenticação para recarregar as músicas
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        fetchSongs();
+      }
+    });
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [fetchSongs]);
 
   const processInput = useCallback((text: string) => {
     const extracted = extrairCifras(text);
@@ -49,7 +71,7 @@ export const useSongManagement = ({ initialInputText, onInputTextChange }: UseSo
     } else {
       setNewSongTitle('');
     }
-    onInputTextChange(inputText); // Notifica o componente pai sobre a mudança no inputText
+    onInputTextChange(inputText);
   }, [inputText, processInput, onInputTextChange]);
 
   const handleClear = () => {
@@ -61,7 +83,7 @@ export const useSongManagement = ({ initialInputText, onInputTextChange }: UseSo
     toast.info("Input e output limpos.");
   };
 
-  const handleSaveSong = () => {
+  const handleSaveSong = async () => {
     if (!inputText.trim() || !outputText.trim()) {
       toast.error("Não há música para salvar. Por favor, cole o conteúdo primeiro.");
       return;
@@ -71,32 +93,92 @@ export const useSongManagement = ({ initialInputText, onInputTextChange }: UseSo
       return;
     }
 
-    const newSong: Song = {
-      id: Date.now().toString(),
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      toast.error("Você precisa estar logado para salvar músicas.");
+      return;
+    }
+
+    const newSongData = {
+      user_id: user.user.id,
       title: newSongTitle.trim(),
-      originalContent: inputText,
-      extractedChords: outputText,
+      original_content: inputText,
+      extracted_chords: outputText,
     };
-    setSongs(prev => [...prev, newSong]);
-    setNewSongTitle('');
-    toast.success(`Música "${newSong.title}" salva com sucesso!`);
+
+    const { data, error } = await supabase
+      .from('songs')
+      .insert([newSongData])
+      .select();
+
+    if (error) {
+      toast.error("Erro ao salvar música: " + error.message);
+      console.error("Erro ao salvar música:", error);
+    } else if (data && data.length > 0) {
+      setSongs(prev => [...prev, data[0]]);
+      setNewSongTitle('');
+      toast.success(`Música "${data[0].title}" salva com sucesso!`);
+    }
   };
 
-  const handleLoadSong = (index: number) => {
-    const songToLoad = songs[index];
+  const handleLoadSong = (id: string) => {
+    const songToLoad = songs.find(song => song.id === id);
     if (songToLoad) {
       setInputText(songToLoad.originalContent);
-      setCurrentSongIndex(index);
+      setCurrentSongIndex(songs.findIndex(s => s.id === id));
       setNewSongTitle(songToLoad.title);
+      setOutputText(songToLoad.extractedChords);
+      setOriginalOutputText(songToLoad.extractedChords);
+      toast.info(`Música "${songToLoad.title}" carregada.`);
     }
   };
 
-  const handleDeleteSong = (id: string) => {
-    setSongs(prev => prev.filter(song => song.id !== id));
-    if (currentSongIndex !== null && songs[currentSongIndex]?.id === id) {
-      handleClear();
+  const handleDeleteSong = async (id: string) => {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      toast.error("Você precisa estar logado para excluir músicas.");
+      return;
     }
-    toast.success("Música excluída.");
+
+    const { error } = await supabase
+      .from('songs')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.user.id); // Garantir que o usuário só pode excluir suas próprias músicas
+
+    if (error) {
+      toast.error("Erro ao excluir música: " + error.message);
+      console.error("Erro ao excluir música:", error);
+    } else {
+      setSongs(prev => prev.filter(song => song.id !== id));
+      if (currentSongIndex !== null && songs[currentSongIndex]?.id === id) {
+        handleClear();
+      }
+      toast.success("Música excluída.");
+    }
+  };
+
+  const handleUpdateSongChords = async (songId: string, newChords: string) => {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) {
+      toast.error("Você precisa estar logado para atualizar músicas.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from('songs')
+      .update({ extracted_chords: newChords, updated_at: new Date().toISOString() })
+      .eq('id', songId)
+      .eq('user_id', user.user.id);
+
+    if (error) {
+      console.error("Erro ao atualizar cifras da música:", error);
+      // toast.error("Erro ao salvar alterações na música."); // Não exibir toast a cada keystroke
+    } else {
+      setSongs(prev => prev.map(song =>
+        song.id === songId ? { ...song, extractedChords: newChords } : song
+      ));
+    }
   };
 
   return {
@@ -115,5 +197,7 @@ export const useSongManagement = ({ initialInputText, onInputTextChange }: UseSo
     handleSaveSong,
     handleLoadSong,
     handleDeleteSong,
+    handleUpdateSongChords,
+    loadingSongs,
   };
 };
