@@ -44,7 +44,7 @@ const ChordRecognizer = () => {
   const [newSongTitle, setNewSongTitle] = useState<string>('');
   const [isViewerOpen, setIsViewerOpen] = useState<boolean>(false);
   const [viewerTransposeDelta, setViewerTransposeDelta] = useState<number>(0);
-  const [viewerSearchTerm, setViewerSearchTerm] = useState<string>(''); // Novo estado para busca no visualizador
+  const [viewerSearchTerm, setViewerSearchTerm] = useState<string>('');
 
   const [repertoires, setRepertoires] = useState<Repertoire[]>([]);
   const [selectedRepertoireId, setSelectedRepertoireId] = useState<string | null>(null);
@@ -54,7 +54,10 @@ const ChordRecognizer = () => {
   const [isRepertoiresPanelOpen, setIsRepertoiresPanelOpen] = useState<boolean>(false);
 
   const [isRepertoireViewerActive, setIsRepertoireViewerActive] = useState<boolean>(false);
-  const [currentRepertoireSongIndex, setCurrentRepertoireSongIndex] = useState<number>(0);
+  
+  // Novos estados para a navegação do visualizador
+  const [viewerNavigableSongs, setViewerNavigableSongs] = useState<Song[]>([]);
+  const [currentViewerSongIndex, setCurrentViewerSongIndex] = useState<number>(0);
 
   useEffect(() => {
     const storedSongs = localStorage.getItem('chordRecognizerSongs');
@@ -153,87 +156,86 @@ const ChordRecognizer = () => {
     toast.success("Música excluída.");
   };
 
-  const handleNextSong = () => {
-    if (isRepertoireViewerActive && selectedRepertoire) {
-      const repertoireSongs = selectedRepertoire.songIds;
-      if (repertoireSongs.length === 0) return;
-
-      const nextRepIndex = (currentRepertoireSongIndex + 1) % repertoireSongs.length;
-      setCurrentRepertoireSongIndex(nextRepIndex);
-      const nextSongId = repertoireSongs[nextRepIndex];
-      const globalIndex = songs.findIndex(s => s.id === nextSongId);
-      if (globalIndex !== -1) {
-        handleLoadSong(globalIndex);
-      }
+  const prepareViewerSongs = useCallback((search: string, isRepertoireMode: boolean, initialSongId?: string) => {
+    let baseSongsList: Song[] = [];
+    if (isRepertoireMode && selectedRepertoire) {
+      baseSongsList = selectedRepertoire.songIds
+        .map(id => songs.find(s => s.id === id))
+        .filter((s): s is Song => s !== undefined);
     } else {
-      if (songs.length === 0) return;
-      const nextIndex = (currentSongIndex === null || currentSongIndex === songs.length - 1)
-        ? 0
-        : currentSongIndex + 1;
-      handleLoadSong(nextIndex);
+      baseSongsList = songs;
     }
-    setViewerTransposeDelta(0);
-    setViewerSearchTerm(''); // Reset search when changing songs
+
+    const lowerCaseSearch = search.toLowerCase();
+    const filtered = baseSongsList.filter(song =>
+      song.title.toLowerCase().includes(lowerCaseSearch) ||
+      song.extractedChords.toLowerCase().includes(lowerCaseSearch)
+    );
+
+    setViewerNavigableSongs(filtered);
+
+    let newCurrentIndex = 0;
+    if (initialSongId) {
+      const index = filtered.findIndex(s => s.id === initialSongId);
+      if (index !== -1) {
+        newCurrentIndex = index;
+      } else if (filtered.length > 0) {
+        newCurrentIndex = 0;
+      }
+    } else if (filtered.length > 0) {
+      newCurrentIndex = 0;
+    }
+    setCurrentViewerSongIndex(newCurrentIndex);
+  }, [songs, selectedRepertoire]);
+
+  useEffect(() => {
+    if (isViewerOpen) {
+      // Re-prepare songs when search term changes, maintaining current song if possible
+      const currentSongId = viewerNavigableSongs[currentViewerSongIndex]?.id;
+      prepareViewerSongs(viewerSearchTerm, isRepertoireViewerActive, currentSongId);
+    }
+  }, [viewerSearchTerm, isViewerOpen, isRepertoireViewerActive, prepareViewerSongs]);
+
+  const handleNextSong = () => {
+    if (viewerNavigableSongs.length === 0) return;
+    const nextIndex = (currentViewerSongIndex + 1) % viewerNavigableSongs.length;
+    setCurrentViewerSongIndex(nextIndex);
+    setViewerTransposeDelta(0); // Reset transposition for new song
   };
 
   const handlePreviousSong = () => {
-    if (isRepertoireViewerActive && selectedRepertoire) {
-      const repertoireSongs = selectedRepertoire.songIds;
-      if (repertoireSongs.length === 0) return;
-
-      const prevRepIndex = (currentRepertoireSongIndex - 1 + repertoireSongs.length) % repertoireSongs.length;
-      setCurrentRepertoireSongIndex(prevRepIndex);
-      const prevSongId = repertoireSongs[prevRepIndex];
-      const globalIndex = songs.findIndex(s => s.id === prevSongId);
-      if (globalIndex !== -1) {
-        handleLoadSong(globalIndex);
-      }
-    } else {
-      if (songs.length === 0) return;
-      const prevIndex = (currentSongIndex === null || currentSongIndex === 0)
-        ? songs.length - 1
-        : currentSongIndex - 1;
-      handleLoadSong(prevIndex);
-    }
-    setViewerTransposeDelta(0);
-    setViewerSearchTerm(''); // Reset search when changing songs
+    if (viewerNavigableSongs.length === 0) return;
+    const prevIndex = (currentViewerSongIndex - 1 + viewerNavigableSongs.length) % viewerNavigableSongs.length;
+    setCurrentViewerSongIndex(prevIndex);
+    setViewerTransposeDelta(0); // Reset transposition for new song
   };
 
   const getViewerContent = () => {
-    let contentToDisplay = outputText;
+    if (viewerNavigableSongs.length === 0) return '';
 
-    if (isRepertoireViewerActive && selectedRepertoire && selectedRepertoire.songIds.length > 0) {
-      const currentRepSongId = selectedRepertoire.songIds[currentRepertoireSongIndex];
-      const currentRepSong = songs.find(s => s.id === currentRepSongId);
-      if (currentRepSong) {
-        contentToDisplay = currentRepSong.extractedChords;
-      }
-    } else if (currentSongIndex !== null && songs[currentSongIndex]) {
-      contentToDisplay = songs[currentSongIndex].extractedChords;
-    }
+    const currentSong = viewerNavigableSongs[currentViewerSongIndex];
+    if (!currentSong) return '';
+
+    let contentToDisplay = currentSong.extractedChords;
 
     if (contentToDisplay) {
       let lines = contentToDisplay.split('\n');
-      // Apply transposition first
+      // Apply transposition
       lines = lines.map(line => transposeChordLine(line, viewerTransposeDelta));
-
-      // Apply search filter if a term is present
-      if (viewerSearchTerm.trim()) {
-        const lowerCaseSearchTerm = viewerSearchTerm.toLowerCase();
-        lines = lines.filter(line => line.toLowerCase().includes(lowerCaseSearchTerm));
-      }
       return lines.join('\n');
     }
     return '';
   };
 
   const getViewerTitle = () => {
+    if (viewerNavigableSongs.length === 0) return "Cifras em Tela Cheia";
+    const currentSong = viewerNavigableSongs[currentViewerSongIndex];
+    if (!currentSong) return "Cifras em Tela Cheia";
+
     if (isRepertoireViewerActive && selectedRepertoire) {
-      const currentRepSongId = selectedRepertoire.songIds[currentRepertoireSongIndex];
-      const currentRepSong = songs.find(s => s.id === currentRepSongId);
-      return `${selectedRepertoire.name} - ${currentRepSong ? currentRepSong.title : 'Música Desconhecida'}`;
+      return `${selectedRepertoire.name} - ${currentSong.title}`;
     }
-    return currentSongIndex !== null && songs[currentSongIndex] ? songs[currentSongIndex].title : "Cifras em Tela Cheia";
+    return currentSong.title;
   };
 
   const handleCopyToClipboard = async () => {
@@ -313,20 +315,12 @@ const ChordRecognizer = () => {
     }
 
     setIsRepertoireViewerActive(true);
-    setCurrentRepertoireSongIndex(0);
     setViewerTransposeDelta(0);
     setViewerSearchTerm(''); // Reset search when opening repertoire viewer
 
     const firstSongId = rep.songIds[0];
-    const globalIndex = songs.findIndex(s => s.id === firstSongId);
-    if (globalIndex !== -1) {
-      handleLoadSong(globalIndex);
-    } else {
-      setInputText('');
-      setOutputText('');
-      setOriginalOutputText('');
-      setCurrentSongIndex(null);
-    }
+    prepareViewerSongs('', true, firstSongId); // Prepare songs for repertoire mode
+
     setIsViewerOpen(true);
     toast.info(`Abrindo repertório "${rep.name}" em tela cheia.`);
   };
@@ -334,9 +328,10 @@ const ChordRecognizer = () => {
   const handleCloseViewer = () => {
     setIsViewerOpen(false);
     setIsRepertoireViewerActive(false);
-    setCurrentRepertoireSongIndex(0);
     setViewerTransposeDelta(0);
     setViewerSearchTerm(''); // Reset search term
+    setViewerNavigableSongs([]); // Reset navigable songs
+    setCurrentViewerSongIndex(0); // Reset current index
   };
 
   const selectedRepertoire = selectedRepertoireId
@@ -381,22 +376,35 @@ const ChordRecognizer = () => {
               onOpenChange={(open) => {
                 setIsViewerOpen(open);
                 if (open) { // When dialog is opening
-                  if (currentSongIndex === null && outputText) {
+                  setIsRepertoireViewerActive(false); // Default to single song mode
+                  setViewerTransposeDelta(0);
+                  setViewerSearchTerm(''); // Reset search term
+
+                  let initialSongIdForViewer: string | undefined;
+                  if (currentSongIndex !== null && songs[currentSongIndex]) {
+                    initialSongIdForViewer = songs[currentSongIndex].id;
+                  } else if (outputText) {
+                    // Create a temporary song if no song is loaded but there's output
                     const tempSong: Song = {
                       id: 'temp',
                       title: 'Música Atual',
                       originalContent: inputText,
                       extractedChords: outputText,
                     };
+                    // Add temp song to songs array if it's not already there
                     setSongs(prev => {
-                      const newSongs = prev.filter(s => s.id !== 'temp');
-                      return [...newSongs, tempSong];
+                      const existingTemp = prev.find(s => s.id === 'temp');
+                      if (!existingTemp) {
+                        return [...prev, tempSong];
+                      } else if (existingTemp.originalContent !== inputText || existingTemp.extractedChords !== outputText) {
+                        // Update temp song if content changed
+                        return prev.map(s => s.id === 'temp' ? tempSong : s);
+                      }
+                      return prev;
                     });
-                    setCurrentSongIndex(songs.length);
+                    initialSongIdForViewer = 'temp';
                   }
-                  setIsRepertoireViewerActive(false);
-                  setViewerTransposeDelta(0);
-                  setViewerSearchTerm('');
+                  prepareViewerSongs('', false, initialSongIdForViewer); // Initial search term is empty, not repertoire mode
                 } else { // When dialog is closing
                   handleCloseViewer(); // Ensure all viewer states are reset
                 }
@@ -421,7 +429,7 @@ const ChordRecognizer = () => {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400" />
                     <Input
-                      placeholder="Buscar cifras na tela cheia..."
+                      placeholder="Buscar músicas na tela cheia..."
                       value={viewerSearchTerm}
                       onChange={(e) => setViewerSearchTerm(e.target.value)}
                       className="pl-9 w-full"
@@ -439,14 +447,14 @@ const ChordRecognizer = () => {
                   <div className="flex gap-2">
                     <Button
                       onClick={handlePreviousSong}
-                      disabled={isRepertoireViewerActive ? (selectedRepertoire?.songIds.length || 0) <= 1 : songs.length <= 1}
+                      disabled={viewerNavigableSongs.length <= 1}
                       variant="outline"
                     >
                       <ChevronLeft className="h-4 w-4" /> Anterior
                     </Button>
                     <Button
                       onClick={handleNextSong}
-                      disabled={isRepertoireViewerActive ? (selectedRepertoire?.songIds.length || 0) <= 1 : songs.length <= 1}
+                      disabled={viewerNavigableSongs.length <= 1}
                       variant="outline"
                     >
                       Próxima <ChevronRight className="h-4 w-4" />
