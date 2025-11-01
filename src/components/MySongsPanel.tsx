@@ -70,6 +70,11 @@ const MySongsPanel: React.FC<MySongsPanelProps> = ({
       <SheetContent side="right" className="w-full sm:max-w-md flex flex-col">
         <SheetHeader>
           <SheetTitle className="text-2xl text-center">Minhas Músicas</SheetTitle>
+          {selectedRepertoire && (
+            <p className="text-center text-sm text-purple-600 dark:text-purple-400 font-medium">
+              Repertório selecionado: {selectedRepertoire.name}
+            </p>
+          )}
         </SheetHeader>
         <div className="flex flex-col flex-1 p-4">
           <div className="flex gap-2 mb-4">
