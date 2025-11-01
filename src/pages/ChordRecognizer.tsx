@@ -422,7 +422,7 @@ const ChordRecognizer = () => {
                     disabled={!activeViewerSongId} // Desabilita edição se nenhuma música estiver selecionada
                   />
                 </div>
-                <div className="flex justify-between p-4 border-t dark:border-gray-700">
+                <div className="flex flex-wrap justify-center gap-2 p-4 border-t dark:border-gray-700">
                   <div className="flex gap-2">
                     <Button onClick={() => setViewerTransposeDelta(prev => prev - 1)} variant="secondary" disabled={!activeViewerSongId}>Transpor -1</Button>
                     <Button onClick={() => setViewerTransposeDelta(prev => prev + 1)} variant="secondary" disabled={!activeViewerSongId}>Transpor +1</Button>
