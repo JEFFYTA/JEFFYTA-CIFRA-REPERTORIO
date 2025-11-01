@@ -376,16 +376,14 @@ const ChordRecognizer = () => {
             <Button onClick={handleCopyToClipboard} disabled={!outputText.trim()} variant="outline">
               <Copy className="mr-2 h-4 w-4" /> Copiar
             </Button>
-          </div>
-          <Dialog open={isViewerOpen} onOpenChange={handleCloseViewer}>
-            <DialogTrigger asChild disabled={!outputText && songs.length === 0}>
-              <div
-                className={cn(
-                  "flex-1 min-h-[300px] lg:min-h-[600px] font-mono text-base resize-y bg-gray-50 dark:bg-gray-800 p-4 rounded-md border overflow-auto",
-                  (outputText || songs.length > 0) && "cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
-                )}
-                onClick={() => {
-                  if (!isViewerOpen) {
+            <Dialog open={isViewerOpen} onOpenChange={handleCloseViewer}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="ml-auto"
+                  disabled={!outputText && songs.length === 0} // Disable if no output and no saved songs
+                  onClick={() => {
+                    // If no current song is loaded but there's output, treat it as a temporary song for viewer
                     if (currentSongIndex === null && outputText) {
                       const tempSong: Song = {
                         id: 'temp',
@@ -397,64 +395,71 @@ const ChordRecognizer = () => {
                         const newSongs = prev.filter(s => s.id !== 'temp');
                         return [...newSongs, tempSong];
                       });
-                      setCurrentSongIndex(songs.length);
+                      setCurrentSongIndex(songs.length); // Set index to the newly added temp song
                     }
-                    setIsRepertoireViewerActive(false);
+                    setIsRepertoireViewerActive(false); // Ensure not in repertoire mode
                     setViewerTransposeDelta(0);
                     setViewerSearchTerm('');
-                  }
-                }}
-              >
-                <pre className="whitespace-pre-wrap">{outputText || "Clique aqui para ver as cifras organizadas em tela cheia."}</pre>
-              </div>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[90vw] h-[90vh] flex flex-col p-0">
-              <DialogHeader className="p-4 border-b dark:border-gray-700">
-                <DialogTitle className="text-xl text-center">
-                  {getViewerTitle()}
-                </DialogTitle>
-              </DialogHeader>
-              <div className="p-4 border-b dark:border-gray-700">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400" />
-                  <Input
-                    placeholder="Buscar cifras na tela cheia..."
-                    value={viewerSearchTerm}
-                    onChange={(e) => setViewerSearchTerm(e.target.value)}
-                    className="pl-9 w-full"
-                  />
-                </div>
-              </div>
-              <div className="flex-1 p-4 overflow-auto font-mono text-lg leading-relaxed">
-                <pre className="whitespace-pre-wrap">{getViewerContent()}</pre>
-              </div>
-              <div className="flex justify-between p-4 border-t dark:border-gray-700">
-                <div className="flex gap-2">
-                  <Button onClick={() => setViewerTransposeDelta(prev => prev - 1)} variant="secondary">Transpor -1</Button>
-                  <Button onClick={() => setViewerTransposeDelta(prev => prev + 1)} variant="secondary">Transpor +1</Button>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handlePreviousSong}
-                    disabled={isRepertoireViewerActive ? (selectedRepertoire?.songIds.length || 0) <= 1 : songs.length <= 1}
-                    variant="outline"
-                  >
-                    <ChevronLeft className="h-4 w-4" /> Anterior
-                  </Button>
-                  <Button
-                    onClick={handleNextSong}
-                    disabled={isRepertoireViewerActive ? (selectedRepertoire?.songIds.length || 0) <= 1 : songs.length <= 1}
-                    variant="outline"
-                  >
-                    Próxima <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-                <Button onClick={handleCloseViewer} variant="ghost">
-                  <Minimize2 className="mr-2 h-4 w-4" /> Fechar
+                    setIsViewerOpen(true);
+                  }}
+                >
+                  <Maximize2 className="mr-2 h-4 w-4" /> Tela Cheia
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[90vw] h-[90vh] flex flex-col p-0">
+                <DialogHeader className="p-4 border-b dark:border-gray-700">
+                  <DialogTitle className="text-xl text-center">
+                    {getViewerTitle()}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="p-4 border-b dark:border-gray-700">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400" />
+                    <Input
+                      placeholder="Buscar cifras na tela cheia..."
+                      value={viewerSearchTerm}
+                      onChange={(e) => setViewerSearchTerm(e.target.value)}
+                      className="pl-9 w-full"
+                    />
+                  </div>
+                </div>
+                <div className="flex-1 p-4 overflow-auto font-mono text-lg leading-relaxed">
+                  <pre className="whitespace-pre-wrap">{getViewerContent()}</pre>
+                </div>
+                <div className="flex justify-between p-4 border-t dark:border-gray-700">
+                  <div className="flex gap-2">
+                    <Button onClick={() => setViewerTransposeDelta(prev => prev - 1)} variant="secondary">Transpor -1</Button>
+                    <Button onClick={() => setViewerTransposeDelta(prev => prev + 1)} variant="secondary">Transpor +1</Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handlePreviousSong}
+                      disabled={isRepertoireViewerActive ? (selectedRepertoire?.songIds.length || 0) <= 1 : songs.length <= 1}
+                      variant="outline"
+                    >
+                      <ChevronLeft className="h-4 w-4" /> Anterior
+                    </Button>
+                    <Button
+                      onClick={handleNextSong}
+                      disabled={isRepertoireViewerActive ? (selectedRepertoire?.songIds.length || 0) <= 1 : songs.length <= 1}
+                      variant="outline"
+                    >
+                      Próxima <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Button onClick={handleCloseViewer} variant="ghost">
+                    <Minimize2 className="mr-2 h-4 w-4" /> Fechar
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <Textarea
+            id="output"
+            value={outputText}
+            readOnly
+            className="flex-1 min-h-[300px] lg:min-h-[600px] font-mono text-base resize-y bg-gray-50 dark:bg-gray-800"
+          />
         </CardContent>
       </Card>
 
