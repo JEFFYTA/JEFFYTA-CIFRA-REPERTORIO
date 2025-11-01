@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react'; // Importar useState
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,7 +19,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Save, Trash2 } from 'lucide-react';
+import { Save, Trash2, Search } from 'lucide-react'; // Importar o ícone Search
 import { cn } from "@/lib/utils";
 import { Repertoire } from "@/types/repertoire";
 
@@ -59,6 +59,12 @@ const MySongsPanel: React.FC<MySongsPanelProps> = ({
   selectedRepertoire,
   handleToggleSongInRepertoire,
 }) => {
+  const [searchTerm, setSearchTerm] = useState<string>('');
+
+  const filteredSongs = songs.filter(song =>
+    song.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md flex flex-col">
@@ -77,17 +83,30 @@ const MySongsPanel: React.FC<MySongsPanelProps> = ({
               <Save className="mr-2 h-4 w-4" /> Salvar
             </Button>
           </div>
+
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400" />
+            <Input
+              placeholder="Buscar músicas..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
           <ScrollArea className="flex-1 border rounded-md p-2">
-            {songs.length === 0 ? (
-              <p className="text-center text-gray-500 dark:text-gray-400">Nenhuma música salva ainda.</p>
+            {filteredSongs.length === 0 ? (
+              <p className="text-center text-gray-500 dark:text-gray-400">
+                {searchTerm ? "Nenhuma música encontrada." : "Nenhuma música salva ainda."}
+              </p>
             ) : (
               <div className="space-y-2">
-                {songs.map((song, index) => (
+                {filteredSongs.map((song, index) => (
                   <div
                     key={song.id}
                     className={cn(
                       "flex items-center justify-between p-2 border rounded-md bg-white dark:bg-gray-700 shadow-sm",
-                      currentSongIndex === index && "bg-blue-50 dark:bg-blue-900 border-blue-500 ring-2 ring-blue-500"
+                      currentSongIndex !== null && songs[currentSongIndex]?.id === song.id && "bg-blue-50 dark:bg-blue-900 border-blue-500 ring-2 ring-blue-500"
                     )}
                   >
                     <span className="font-medium truncate">{song.title}</span>
@@ -105,7 +124,7 @@ const MySongsPanel: React.FC<MySongsPanelProps> = ({
                         </div>
                       )}
                       <Button
-                        onClick={() => handleLoadSong(index)}
+                        onClick={() => handleLoadSong(songs.findIndex(s => s.id === song.id))} // Encontrar o índice original
                         variant="ghost"
                         size="sm"
                         className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
