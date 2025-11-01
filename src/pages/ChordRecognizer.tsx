@@ -376,32 +376,37 @@ const ChordRecognizer = () => {
             <Button onClick={handleCopyToClipboard} disabled={!outputText.trim()} variant="outline">
               <Copy className="mr-2 h-4 w-4" /> Copiar
             </Button>
-            <Dialog open={isViewerOpen} onOpenChange={handleCloseViewer}>
+            <Dialog
+              open={isViewerOpen}
+              onOpenChange={(open) => {
+                setIsViewerOpen(open);
+                if (open) { // When dialog is opening
+                  if (currentSongIndex === null && outputText) {
+                    const tempSong: Song = {
+                      id: 'temp',
+                      title: 'Música Atual',
+                      originalContent: inputText,
+                      extractedChords: outputText,
+                    };
+                    setSongs(prev => {
+                      const newSongs = prev.filter(s => s.id !== 'temp');
+                      return [...newSongs, tempSong];
+                    });
+                    setCurrentSongIndex(songs.length);
+                  }
+                  setIsRepertoireViewerActive(false);
+                  setViewerTransposeDelta(0);
+                  setViewerSearchTerm('');
+                } else { // When dialog is closing
+                  handleCloseViewer(); // Ensure all viewer states are reset
+                }
+              }}
+            >
               <DialogTrigger asChild>
                 <Button
                   variant="outline"
                   className="ml-auto"
                   disabled={!outputText && songs.length === 0} // Disable if no output and no saved songs
-                  onClick={() => {
-                    // If no current song is loaded but there's output, treat it as a temporary song for viewer
-                    if (currentSongIndex === null && outputText) {
-                      const tempSong: Song = {
-                        id: 'temp',
-                        title: 'Música Atual',
-                        originalContent: inputText,
-                        extractedChords: outputText,
-                      };
-                      setSongs(prev => {
-                        const newSongs = prev.filter(s => s.id !== 'temp');
-                        return [...newSongs, tempSong];
-                      });
-                      setCurrentSongIndex(songs.length); // Set index to the newly added temp song
-                    }
-                    setIsRepertoireViewerActive(false); // Ensure not in repertoire mode
-                    setViewerTransposeDelta(0);
-                    setViewerSearchTerm('');
-                    setIsViewerOpen(true);
-                  }}
                 >
                   <Maximize2 className="mr-2 h-4 w-4" /> Tela Cheia
                 </Button>
