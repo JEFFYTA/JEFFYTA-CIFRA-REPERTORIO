@@ -9,8 +9,9 @@ export function extrairCifras(texto: string): string {
     const linhas = texto.split('\n');
     let resultado: string[] = [];
 
-    // Regex para encontrar padrões de cifra comuns
-    const chordRegex = /([CDEFGAB][#b]?m?(°|6|7|7M|7\(9-\)|7\(9\)|7\(4\)|9|11|13|13-|add9|sus4)?)/g;
+    // Regex para encontrar padrões de cifra comuns, incluindo baixo invertido
+    // Ex: C, C#m7, G/B, F7M/C
+    const chordRegex = /([CDEFGAB][#b]?)(m|°)?(6|7|7M|7\(9-\)|7\(9\)|7\(4\)|9|11|13|13-|add9|sus4)?(\/[CDEFGAB][#b]?)?/g;
     const CHORD_SPACING = 6; // Número de espaços entre as cifras
 
     for (let i = 0; i < linhas.length; i++) {
@@ -100,6 +101,10 @@ export function transposeChordLine(line: string, delta: number): string {
         return line;
     }
 
+    // Regex para capturar raiz, tipo (m/°), extensões e baixo invertido
+    // Ex: F7M/C -> match[1]=F, match[2]=undefined, match[3]=7M, match[4]=/C
+    const chordPartRegex = /^([CDEFGAB][#b]?)(m|°)?(6|7|7M|7\(9-\)|7\(9\)|7\(4\)|9|11|13|13-|add9|sus4)?(\/[CDEFGAB][#b]?)?$/;
+
     // Dividir a linha por espaços para lidar com múltiplas cifras em uma linha
     const parts = line.split(/(\s+)/); // Manter delimitadores para preservar o espaçamento
 
@@ -107,19 +112,32 @@ export function transposeChordLine(line: string, delta: number): string {
         // Processar apenas se não for apenas espaço em branco
         if (p.trim() === '') return p;
 
-        // Regex para capturar raiz, menor/diminuto e extensões
-        const match = p.match(/^([CDEFGAB][#b]?)(m|°)?(.*)$/);
-        if (!match) return p; // Não é uma cifra, retornar como está
+        const match = p.match(chordPartRegex);
+        if (!match) return p; // Não é uma cifra reconhecida, retornar como está
 
         const raiz = match[1]; // ex: C, G#, Bb
         const tipo = match[2] || ''; // ex: m, °
-        const ext = match[3]; // ex: 7, add9, sus4
+        const ext = match[3] || ''; // ex: 7M, add9
+        const bassNotePart = match[4] || ''; // ex: /C
 
         const idx = notaMap[raiz];
         if (idx === undefined) return p; // Raiz não reconhecida, retornar como está
 
         const newIdx = (idx + delta + 12) % 12; // Garantir índice positivo
-        return notaBase[newIdx] + tipo + ext;
+        let transposedChord = notaBase[newIdx] + tipo + ext;
+
+        if (bassNotePart) {
+            const bassRaiz = bassNotePart.substring(1); // Remove o '/'
+            const bassIdx = notaMap[bassRaiz];
+            if (bassIdx !== undefined) {
+                const newBassIdx = (bassIdx + delta + 12) % 12;
+                transposedChord += '/' + notaBase[newBassIdx];
+            } else {
+                transposedChord += bassNotePart; // Se o baixo não for reconhecido, mantém o original
+            }
+        }
+
+        return transposedChord;
     });
 
     return transposedParts.join('');
