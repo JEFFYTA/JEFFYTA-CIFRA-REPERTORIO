@@ -55,11 +55,9 @@ const ChordRecognizer = () => {
 
   const [isRepertoireViewerActive, setIsRepertoireViewerActive] = useState<boolean>(false);
   
-  // Novos estados para a navegação do visualizador
   const [viewerNavigableSongs, setViewerNavigableSongs] = useState<Song[]>([]);
   const [currentViewerSongIndex, setCurrentViewerSongIndex] = useState<number>(0);
 
-  // Mover a declaração de selectedRepertoire para antes de prepareViewerSongs
   const selectedRepertoire = selectedRepertoireId
     ? repertoires.find(rep => rep.id === selectedRepertoireId)
     : null;
@@ -172,10 +170,13 @@ const ChordRecognizer = () => {
     }
 
     const lowerCaseSearch = search.toLowerCase();
-    const filtered = baseSongsList.filter(song =>
+    let filtered = baseSongsList.filter(song =>
       song.title.toLowerCase().includes(lowerCaseSearch) ||
       song.extractedChords.toLowerCase().includes(lowerCaseSearch)
     );
+
+    // Sort alphabetically by title
+    filtered.sort((a, b) => a.title.localeCompare(b.title));
 
     setViewerNavigableSongs(filtered);
 
@@ -191,7 +192,7 @@ const ChordRecognizer = () => {
       newCurrentIndex = 0;
     }
     setCurrentViewerSongIndex(newCurrentIndex);
-  }, [songs, selectedRepertoire]); // selectedRepertoire agora está definido
+  }, [songs, selectedRepertoire]);
 
   useEffect(() => {
     if (isViewerOpen) {
@@ -216,7 +217,9 @@ const ChordRecognizer = () => {
   };
 
   const getViewerContent = () => {
-    if (viewerNavigableSongs.length === 0) return '';
+    if (viewerNavigableSongs.length === 0) {
+      return viewerSearchTerm.trim() ? "Nenhuma música encontrada com este termo." : "Busque por uma música para começar.";
+    }
 
     const currentSong = viewerNavigableSongs[currentViewerSongIndex];
     if (!currentSong) return '';
@@ -233,7 +236,9 @@ const ChordRecognizer = () => {
   };
 
   const getViewerTitle = () => {
-    if (viewerNavigableSongs.length === 0) return "Cifras em Tela Cheia";
+    if (viewerNavigableSongs.length === 0) {
+      return "Cifras em Tela Cheia";
+    }
     const currentSong = viewerNavigableSongs[currentViewerSongIndex];
     if (!currentSong) return "Cifras em Tela Cheia";
 
@@ -323,8 +328,8 @@ const ChordRecognizer = () => {
     setViewerTransposeDelta(0);
     setViewerSearchTerm(''); // Reset search when opening repertoire viewer
 
-    const firstSongId = rep.songIds[0];
-    prepareViewerSongs('', true, firstSongId); // Prepare songs for repertoire mode
+    // No initial song ID for repertoire viewer, it will be empty until search
+    prepareViewerSongs('', true); 
 
     setIsViewerOpen(true);
     toast.info(`Abrindo repertório "${rep.name}" em tela cheia.`);
@@ -380,32 +385,8 @@ const ChordRecognizer = () => {
                   setIsRepertoireViewerActive(false); // Default to single song mode
                   setViewerTransposeDelta(0);
                   setViewerSearchTerm(''); // Reset search term
-
-                  let initialSongIdForViewer: string | undefined;
-                  if (currentSongIndex !== null && songs[currentSongIndex]) {
-                    initialSongIdForViewer = songs[currentSongIndex].id;
-                  } else if (outputText) {
-                    // Create a temporary song if no song is loaded but there's output
-                    const tempSong: Song = {
-                      id: 'temp',
-                      title: 'Música Atual',
-                      originalContent: inputText,
-                      extractedChords: outputText,
-                    };
-                    // Add temp song to songs array if it's not already there
-                    setSongs(prev => {
-                      const existingTemp = prev.find(s => s.id === 'temp');
-                      if (!existingTemp) {
-                        return [...prev, tempSong];
-                      } else if (existingTemp.originalContent !== inputText || existingTemp.extractedChords !== outputText) {
-                        // Update temp song if content changed
-                        return prev.map(s => s.id === 'temp' ? tempSong : s);
-                      }
-                      return prev;
-                    });
-                    initialSongIdForViewer = 'temp';
-                  }
-                  prepareViewerSongs('', false, initialSongIdForViewer); // Initial search term is empty, not repertoire mode
+                  setViewerNavigableSongs([]); // Start with an empty list
+                  setCurrentViewerSongIndex(0); // Reset index
                 } else { // When dialog is closing
                   handleCloseViewer(); // Ensure all viewer states are reset
                 }
@@ -415,7 +396,7 @@ const ChordRecognizer = () => {
                 <Button
                   variant="outline"
                   className="ml-auto"
-                  disabled={!outputText && songs.length === 0} // Disable if no output and no saved songs
+                  disabled={songs.length === 0} // Disable if no saved songs at all
                 >
                   <Maximize2 className="mr-2 h-4 w-4" /> Tela Cheia
                 </Button>
