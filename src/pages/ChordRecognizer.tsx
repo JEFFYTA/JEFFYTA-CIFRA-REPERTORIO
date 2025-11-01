@@ -248,7 +248,6 @@ const ChordRecognizer = () => {
         onClear={handleClear}
         onCopyToClipboard={handleCopyToClipboard}
         onOpenFullScreenViewer={handleOpenFullScreenViewer}
-        isFullScreenViewerDisabled={songs.length === 0}
         onSignOut={() => supabase.auth.signOut()}
       />
 

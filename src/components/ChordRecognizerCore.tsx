@@ -15,7 +15,6 @@ interface ChordRecognizerCoreProps {
   onClear: () => void;
   onCopyToClipboard: () => void;
   onOpenFullScreenViewer: () => void;
-  isFullScreenViewerDisabled: boolean;
   onSignOut: () => void;
 }
 
@@ -28,7 +27,6 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
   onClear,
   onCopyToClipboard,
   onOpenFullScreenViewer,
-  isFullScreenViewerDisabled,
   onSignOut,
 }) => {
   return (
@@ -69,7 +67,6 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
               variant="outline"
               className="ml-auto"
               onClick={onOpenFullScreenViewer}
-              disabled={isFullScreenViewerDisabled}
             >
               <Maximize2 className="mr-2 h-4 w-4" /> Tela Cheia
             </Button>
