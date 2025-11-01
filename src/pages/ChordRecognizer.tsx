@@ -59,6 +59,11 @@ const ChordRecognizer = () => {
   const [viewerNavigableSongs, setViewerNavigableSongs] = useState<Song[]>([]);
   const [currentViewerSongIndex, setCurrentViewerSongIndex] = useState<number>(0);
 
+  // Mover a declaração de selectedRepertoire para antes de prepareViewerSongs
+  const selectedRepertoire = selectedRepertoireId
+    ? repertoires.find(rep => rep.id === selectedRepertoireId)
+    : null;
+
   useEffect(() => {
     const storedSongs = localStorage.getItem('chordRecognizerSongs');
     if (storedSongs) {
@@ -186,7 +191,7 @@ const ChordRecognizer = () => {
       newCurrentIndex = 0;
     }
     setCurrentViewerSongIndex(newCurrentIndex);
-  }, [songs, selectedRepertoire]);
+  }, [songs, selectedRepertoire]); // selectedRepertoire agora está definido
 
   useEffect(() => {
     if (isViewerOpen) {
@@ -333,10 +338,6 @@ const ChordRecognizer = () => {
     setViewerNavigableSongs([]); // Reset navigable songs
     setCurrentViewerSongIndex(0); // Reset current index
   };
-
-  const selectedRepertoire = selectedRepertoireId
-    ? repertoires.find(rep => rep.id === selectedRepertoireId)
-    : null;
 
   return (
     <div className="flex-1 flex flex-col lg:flex-row gap-6 p-4 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
