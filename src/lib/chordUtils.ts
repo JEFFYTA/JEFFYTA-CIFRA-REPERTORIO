@@ -86,8 +86,8 @@ export function extractSongTitle(text: string): string {
 
     for (const line of lines) {
         const trim = line.trim();
-        // Ignorar linhas vazias ou cabeçalhos de seção
-        if (!trim || /^\[.*\]$|^\(.*\)$|^{.*}$/.test(trim)) {
+        // Ignorar linhas vazias, cabeçalhos de seção, "Intro:" ou "Tom:"
+        if (!trim || /^\[.*\]$|^\(.*\)$|^{.*}$/.test(trim) || trim.toLowerCase().startsWith('intro:') || trim.toLowerCase().startsWith('tom:')) {
             continue;
         }
 
@@ -107,7 +107,7 @@ export function extractSongTitle(text: string): string {
             continue; // Pular, provavelmente é uma linha de cifra
         }
 
-        // Se chegou aqui, é uma linha não vazia, não é cabeçalho de seção e não é predominantemente cifra.
+        // Se chegou aqui, é uma linha não vazia, não é cabeçalho de seção, não é "Intro:"/"Tom:" e não é predominantemente cifra.
         // Consideramos como título.
         return trim;
     }
