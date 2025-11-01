@@ -55,6 +55,9 @@ const MySongsPanel: React.FC<MySongsPanelProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
 
+  // Adicionando logs para depuração
+  console.log("[MySongsPanel] Props received: selectedRepertoireId:", selectedRepertoireId, "selectedRepertoire:", selectedRepertoire);
+
   const filteredSongs = songs.filter(song =>
     song.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -100,64 +103,68 @@ const MySongsPanel: React.FC<MySongsPanelProps> = ({
               </p>
             ) : (
               <div className="space-y-2">
-                {filteredSongs.map((song, index) => (
-                  <div
-                    key={song.id}
-                    className={cn(
-                      "flex items-center justify-between p-2 border rounded-md bg-white dark:bg-gray-700 shadow-sm",
-                      currentSongIndex !== null && songs[currentSongIndex]?.id === song.id && "bg-blue-50 dark:bg-blue-900 border-blue-500 ring-2 ring-blue-500"
-                    )}
-                  >
-                    <span className="font-medium truncate">{song.title}</span>
-                    <div className="flex gap-1 items-center">
-                      {selectedRepertoireId && (
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            id={`song-${song.id}-repertoire-toggle`}
-                            checked={selectedRepertoire?.songIds.includes(song.id)}
-                            onCheckedChange={(checked) => handleToggleSongInRepertoire(song.id, checked)}
-                          />
-                          <Label htmlFor={`song-${song.id}-repertoire-toggle`} className="sr-only">
-                            {selectedRepertoire?.songIds.includes(song.id) ? "Remover do repertório" : "Adicionar ao repertório"}
-                          </Label>
-                        </div>
+                {filteredSongs.map((song, index) => {
+                  const isInRepertoire = selectedRepertoire?.songIds.includes(song.id);
+                  console.log(`[MySongsPanel] Song ID: ${song.id} - Is in selected repertoire: ${isInRepertoire}`);
+                  return (
+                    <div
+                      key={song.id}
+                      className={cn(
+                        "flex items-center justify-between p-2 border rounded-md bg-white dark:bg-gray-700 shadow-sm",
+                        currentSongIndex !== null && songs[currentSongIndex]?.id === song.id && "bg-blue-50 dark:bg-blue-900 border-blue-500 ring-2 ring-blue-500"
                       )}
-                      <Button
-                        onClick={() => handleLoadSong(song.id)} // Passar o ID da música
-                        variant="ghost"
-                        size="sm"
-                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
-                      >
-                        Carregar
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Esta ação não pode ser desfeita. Isso excluirá permanentemente a música "{song.title}" de todas as listas e repertórios.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteSong(song.id)}>
-                              Excluir
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                    >
+                      <span className="font-medium truncate">{song.title}</span>
+                      <div className="flex gap-1 items-center">
+                        {selectedRepertoireId && (
+                          <div className="flex items-center space-x-2">
+                            <Switch
+                              id={`song-${song.id}-repertoire-toggle`}
+                              checked={isInRepertoire}
+                              onCheckedChange={(checked) => handleToggleSongInRepertoire(song.id, checked)}
+                            />
+                            <Label htmlFor={`song-${song.id}-repertoire-toggle`} className="sr-only">
+                              {isInRepertoire ? "Remover do repertório" : "Adicionar ao repertório"}
+                            </Label>
+                          </div>
+                        )}
+                        <Button
+                          onClick={() => handleLoadSong(song.id)} // Passar o ID da música
+                          variant="ghost"
+                          size="sm"
+                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+                        >
+                          Carregar
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta ação não pode ser desfeita. Isso excluirá permanentemente a música "{song.title}" de todas as listas e repertórios.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteSong(song.id)}>
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </ScrollArea>
