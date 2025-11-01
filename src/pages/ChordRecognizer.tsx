@@ -219,8 +219,13 @@ const ChordRecognizer = () => {
   };
 
   const getViewerContent = () => {
+    // Se o termo de busca estiver vazio, o conteúdo deve ser em branco
+    if (viewerSearchTerm.trim() === '') {
+      return '';
+    }
+
     if (viewerNavigableSongs.length === 0) {
-      return viewerSearchTerm.trim() ? "Nenhuma música encontrada com este termo." : "Busque por uma música para começar.";
+      return "Nenhuma música encontrada com este termo.";
     }
 
     const currentSong = viewerNavigableSongs[currentViewerSongIndex];
@@ -431,14 +436,14 @@ const ChordRecognizer = () => {
                   <div className="flex gap-2">
                     <Button
                       onClick={handlePreviousSong}
-                      disabled={viewerNavigableSongs.length <= 1}
+                      disabled={viewerNavigableSongs.length <= 1 || viewerSearchTerm.trim() === ''}
                       variant="outline"
                     >
                       <ChevronLeft className="h-4 w-4" /> Anterior
                     </Button>
                     <Button
                       onClick={handleNextSong}
-                      disabled={viewerNavigableSongs.length <= 1}
+                      disabled={viewerNavigableSongs.length <= 1 || viewerSearchTerm.trim() === ''}
                       variant="outline"
                     >
                       Próxima <ChevronRight className="h-4 w-4" />
