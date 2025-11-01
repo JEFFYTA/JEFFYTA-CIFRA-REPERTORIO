@@ -8,56 +8,92 @@ export const notaMap: { [key: string]: number } = {
 export function extrairCifras(texto: string): string {
     const linhas = texto.split('\n');
     let resultado: string[] = [];
-    let secaoAtual: string | null = null;
-    let conteudoSecao: string[] = [];
+
+    // Regex para encontrar padrões de cifra comuns
+    const chordRegex = /([CDEFGAB][#b]?m?(°|6|7|7M|7\(9-\)|7\(9\)|7\(4\)|9|11|13|13-|add9|sus4)?)/g;
 
     for (let i = 0; i < linhas.length; i++) {
         let linha = linhas[i];
         let trim = linha.trim();
 
-        if (!trim) continue;
+        // Manter linhas em branco para preservar a estrutura
+        if (!trim) {
+            resultado.push('');
+            continue;
+        }
 
-        // Check for section headers like [Verse], (Chorus), {Bridge}
+        // Manter cabeçalhos de seção como [Verse], (Chorus), {Bridge}
         if (/^\[.*\]$|^\(.*\)$|^{.*}$/.test(trim)) {
-            if (secaoAtual && conteudoSecao.length > 0) {
-                resultado.push(secaoAtual);
-                resultado = resultado.concat(conteudoSecao);
-                if (i < linhas.length - 1) resultado.push(''); // Add a blank line between sections
-            }
-            secaoAtual = trim;
-            conteudoSecao = [];
-            continue;
-        }
-
-        // Handle the very first line if it's not a section and might be a title
-        if (!secaoAtual && i === 0) {
             resultado.push(trim);
-            if (linhas.length > 1) resultado.push('');
             continue;
         }
 
-        // If inside a section, check for chords
-        if (secaoAtual) {
-            // Regex to find common chord patterns
-            const regex = /[CDEFGAB][#b]?m?(°|6|7|7M|7\(9-\)|7\(9\)|7\(4\)|9|11|13|13-|add9|sus4)?/g;
-            const cifras = linha.match(regex) || [];
-            const validas = cifras.filter(c => {
+        // Tratamento especial para a primeira linha não-vazia e não-seção como um possível título
+        // Isso garante que o título da música seja mantido se não for uma linha de cifra
+        if (i === 0 && resultado.length === 0) {
+            const potentialChordsInFirstLine = trim.match(chordRegex) || [];
+            const validChordsInFirstLine = potentialChordsInFirstLine.filter(c => {
                 const raizMatch = c.match(/[CDEFGAB][#b]?/);
                 return raizMatch && notaMap[raizMatch[0]] !== undefined;
             });
-            if (validas.length > 0) {
-                conteudoSecao.push(linha);
+
+            if (validChordsInFirstLine.length === 0) { // Se não houver cifras, é provavelmente um título
+                resultado.push(trim);
+                continue;
             }
+            // Se houver cifras, a linha será processada pela lógica de linha de cifra abaixo
+        }
+
+        // Verificar se a linha contém cifras válidas
+        const potentialChords = linha.match(chordRegex) || [];
+        const validChords = potentialChords.filter(c => {
+            const raizMatch = c.match(/[CDEFGAB][#b]?/);
+            return raizMatch && notaMap[raizMatch[0]] !== undefined;
+        });
+
+        if (validChords.length > 0) {
+            // Se houver cifras válidas, verificar se é principalmente uma linha de cifra
+            let lineWithoutChords = linha;
+            for (const chord of validChords) {
+                // Substituir cifras por espaços para manter o espaçamento original
+                lineWithoutChords = lineWithoutChords.replace(chord, ' '.repeat(chord.length));
+            }
+
+            // Remover caracteres não-espaço que não sejam pontuação para verificar se restam palavras
+            const remainingText = lineWithoutChords.replace(/[\s.,!?;:'"-]/g, '').trim();
+
+            // Considerar uma linha de cifra se não contiver palavras significativas (2 ou mais letras)
+            const containsWords = /[a-zA-Z]{2,}/.test(remainingText);
+
+            if (!containsWords) {
+                resultado.push(linha); // É uma linha de cifra, manter como está
+            } else {
+                // Contém cifras, mas também palavras significativas, então é uma linha de letra com cifras embutidas.
+                // Descartar, substituindo por uma linha em branco.
+                resultado.push('');
+            }
+        } else {
+            // Nenhuma cifra válida encontrada, é uma linha de letra, descartar (substituir por linha em branco)
+            resultado.push('');
         }
     }
 
-    // Add the last section if it exists
-    if (secaoAtual && conteudoSecao.length > 0) {
-        resultado.push(secaoAtual);
-        resultado = resultado.concat(conteudoSecao);
+    // Limpar múltiplas linhas em branco consecutivas, mantendo apenas uma
+    let cleanedResult: string[] = [];
+    let lastWasBlank = false;
+    for (const line of resultado) {
+        if (line.trim() === '') {
+            if (!lastWasBlank) {
+                cleanedResult.push('');
+            }
+            lastWasBlank = true;
+        } else {
+            cleanedResult.push(line);
+            lastWasBlank = false;
+        }
     }
 
-    return resultado.join('\n');
+    return cleanedResult.join('\n');
 }
 
 export function transposeChordLine(line: string, delta: number): string {
