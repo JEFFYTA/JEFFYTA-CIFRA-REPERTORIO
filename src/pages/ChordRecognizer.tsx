@@ -171,11 +171,13 @@ const ChordRecognizer = () => {
 
     const lowerCaseSearch = search.toLowerCase();
     let filtered = baseSongsList.filter(song =>
-      song.title.toLowerCase().includes(lowerCaseSearch) ||
+      // Alterado para startsWith para o título, conforme solicitado
+      song.title.toLowerCase().startsWith(lowerCaseSearch) ||
+      // Mantém includes para o conteúdo das cifras para busca mais abrangente
       song.extractedChords.toLowerCase().includes(lowerCaseSearch)
     );
 
-    // Sort alphabetically by title
+    // Ordena alfabeticamente pelo título
     filtered.sort((a, b) => a.title.localeCompare(b.title));
 
     setViewerNavigableSongs(filtered);
