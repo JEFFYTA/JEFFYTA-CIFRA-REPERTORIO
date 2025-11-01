@@ -11,6 +11,7 @@ export function extrairCifras(texto: string): string {
 
     // Regex para encontrar padrões de cifra comuns
     const chordRegex = /([CDEFGAB][#b]?m?(°|6|7|7M|7\(9-\)|7\(9\)|7\(4\)|9|11|13|13-|add9|sus4)?)/g;
+    const CHORD_SPACING = 6; // Número de espaços entre as cifras
 
     for (let i = 0; i < linhas.length; i++) {
         let linha = linhas[i];
@@ -29,7 +30,6 @@ export function extrairCifras(texto: string): string {
         }
 
         // Tratamento especial para a primeira linha não-vazia e não-seção como um possível título
-        // Isso garante que o título da música seja mantido se não for uma linha de cifra
         if (i === 0 && resultado.length === 0) {
             const potentialChordsInFirstLine = trim.match(chordRegex) || [];
             const validChordsInFirstLine = potentialChordsInFirstLine.filter(c => {
@@ -41,40 +41,37 @@ export function extrairCifras(texto: string): string {
                 resultado.push(trim);
                 continue;
             }
-            // Se houver cifras, a linha será processada pela lógica de linha de cifra abaixo
         }
 
         // Verificar se a linha contém cifras válidas
-        const potentialChords = linha.match(chordRegex) || [];
-        const validChords = potentialChords.filter(c => {
-            const raizMatch = c.match(/[CDEFGAB][#b]?/);
+        const potentialChords = [...linha.matchAll(chordRegex)]; // Usar matchAll para obter todas as ocorrências
+        const validChordsWithIndices = potentialChords.filter(match => {
+            const raizMatch = match[1].match(/[CDEFGAB][#b]?/);
             return raizMatch && notaMap[raizMatch[0]] !== undefined;
         });
 
-        if (validChords.length > 0) {
-            // Se houver cifras válidas, verificar se é principalmente uma linha de cifra
+        if (validChordsWithIndices.length > 0) {
             let lineWithoutChords = linha;
-            for (const chord of validChords) {
-                // Substituir cifras por espaços para manter o espaçamento original
-                lineWithoutChords = lineWithoutChords.replace(chord, ' '.repeat(chord.length));
+            for (const match of validChordsWithIndices) {
+                lineWithoutChords = lineWithoutChords.replace(match[0], ' '.repeat(match[0].length));
             }
 
-            // Remover caracteres não-espaço que não sejam pontuação para verificar se restam palavras
             const remainingText = lineWithoutChords.replace(/[\s.,!?;:'"-]/g, '').trim();
-
-            // Considerar uma linha de cifra se não contiver palavras significativas (2 ou mais letras)
             const containsWords = /[a-zA-Z]{2,}/.test(remainingText);
 
             if (!containsWords) {
-                resultado.push(linha); // É uma linha de cifra, manter como está
+                // É uma linha de cifra, formatar com espaçamento fixo
+                const chordsOnLine = validChordsWithIndices.map(match => match[0]);
+                if (chordsOnLine.length > 0) {
+                    resultado.push(chordsOnLine.join(' '.repeat(CHORD_SPACING)));
+                } else {
+                    resultado.push('');
+                }
             } else {
-                // Contém cifras, mas também palavras significativas, então é uma linha de letra com cifras embutidas.
-                // Descartar, substituindo por uma linha em branco.
-                resultado.push('');
+                resultado.push(''); // Contém cifras e palavras, descartar
             }
         } else {
-            // Nenhuma cifra válida encontrada, é uma linha de letra, descartar (substituir por linha em branco)
-            resultado.push('');
+            resultado.push(''); // Nenhuma cifra válida, descartar
         }
     }
 
@@ -98,30 +95,30 @@ export function extrairCifras(texto: string): string {
 
 export function transposeChordLine(line: string, delta: number): string {
     const trim = line.trim();
-    // Don't transpose section headers or empty lines
+    // Não transpor cabeçalhos de seção ou linhas em branco
     if (!trim || /^\[.*\]$|^\(.*\)$|^{.*}$/.test(trim)) {
         return line;
     }
 
-    // Split the line by spaces to handle multiple chords on one line
-    const parts = line.split(/(\s+)/); // Keep delimiters to preserve spacing
+    // Dividir a linha por espaços para lidar com múltiplas cifras em uma linha
+    const parts = line.split(/(\s+)/); // Manter delimitadores para preservar o espaçamento
 
     const transposedParts = parts.map(p => {
-        // Only process if it's not just whitespace
+        // Processar apenas se não for apenas espaço em branco
         if (p.trim() === '') return p;
 
-        // Regex to capture root, minor/diminished, and extensions
+        // Regex para capturar raiz, menor/diminuto e extensões
         const match = p.match(/^([CDEFGAB][#b]?)(m|°)?(.*)$/);
-        if (!match) return p; // Not a chord, return as is
+        if (!match) return p; // Não é uma cifra, retornar como está
 
-        const raiz = match[1]; // e.g., C, G#, Bb
-        const tipo = match[2] || ''; // e.g., m, °
-        const ext = match[3]; // e.g., 7, add9, sus4
+        const raiz = match[1]; // ex: C, G#, Bb
+        const tipo = match[2] || ''; // ex: m, °
+        const ext = match[3]; // ex: 7, add9, sus4
 
         const idx = notaMap[raiz];
-        if (idx === undefined) return p; // Root not recognized, return as is
+        if (idx === undefined) return p; // Raiz não reconhecida, retornar como está
 
-        const newIdx = (idx + delta + 12) % 12; // Ensure positive index
+        const newIdx = (idx + delta + 12) % 12; // Garantir índice positivo
         return notaBase[newIdx] + tipo + ext;
     });
 
