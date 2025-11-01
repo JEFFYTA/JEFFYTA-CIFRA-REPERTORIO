@@ -1,13 +1,13 @@
 "use client";
 
 import { MadeWithDyad } from "@/components/made-with-dyad";
-// import ChordRecognizer from "./ChordRecognizer"; // Temporariamente removido para depuração
+// O ChordRecognizer agora será renderizado via roteamento em App.tsx
 
 const Index = () => {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-red-200 dark:bg-red-900 text-red-800 dark:text-red-100">
-      <h1 className="text-4xl font-bold">Olá Dyad!</h1>
-      <p className="mt-4 text-lg">Se você vir isso, o aplicativo está funcionando!</p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
+      <h1 className="text-4xl font-bold">Bem-vindo!</h1>
+      <p className="mt-4 text-lg">Navegue para a funcionalidade principal.</p>
       <MadeWithDyad />
     </div>
   );
