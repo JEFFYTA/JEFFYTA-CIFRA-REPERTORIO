@@ -19,7 +19,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { extrairCifras, transposeChordLine } from "@/lib/chordUtils";
-import { MadeWithDyad } from "@/components/made-with-dyad";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Save, Trash2, Maximize2, Minimize2, Copy } from 'lucide-react';
 import { cn } from "@/lib/utils"; // Import cn for conditional class names
@@ -168,7 +167,7 @@ const ChordRecognizer = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row gap-6 p-4 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
+    <div className="flex-1 flex flex-col lg:flex-row gap-6 p-4 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
       <Card className="flex-1 flex flex-col shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl text-center">Reconhecedor de Cifras</CardTitle>
@@ -337,7 +336,6 @@ const ChordRecognizer = () => {
           </ScrollArea>
         </CardContent>
       </Card>
-      <MadeWithDyad />
     </div>
   );
 };
