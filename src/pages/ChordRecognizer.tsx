@@ -288,6 +288,26 @@ const ChordRecognizer = () => {
     }
   };
 
+  const handleSaveTransposition = () => {
+    if (!activeViewerSongId || viewerTransposeDelta === 0) {
+      toast.info("Nenhuma transposição para salvar ou nenhuma música selecionada.");
+      return;
+    }
+
+    const currentTransposedContent = getViewerContent(); // Pega o conteúdo já transposto
+    setViewerEditedContent(currentTransposedContent); // Atualiza o conteúdo editável com a versão transposta
+    setViewerTransposeDelta(0); // Reseta o delta, pois a transposição agora está "incorporada"
+
+    setSongs(prevSongs =>
+      prevSongs.map(song =>
+        song.id === activeViewerSongId
+          ? { ...song, extractedChords: currentTransposedContent }
+          : song
+      )
+    );
+    toast.success("Transposição salva com sucesso!");
+  };
+
   return (
     <div className="flex-1 flex flex-col lg:flex-row gap-6 p-4 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
       <Card className="flex-1 flex flex-col shadow-lg">
@@ -406,6 +426,13 @@ const ChordRecognizer = () => {
                   <div className="flex gap-2">
                     <Button onClick={() => setViewerTransposeDelta(prev => prev - 1)} variant="secondary" disabled={!activeViewerSongId}>Transpor -1</Button>
                     <Button onClick={() => setViewerTransposeDelta(prev => prev + 1)} variant="secondary" disabled={!activeViewerSongId}>Transpor +1</Button>
+                    <Button
+                      onClick={handleSaveTransposition}
+                      variant="default"
+                      disabled={!activeViewerSongId || viewerTransposeDelta === 0}
+                    >
+                      <Save className="mr-2 h-4 w-4" /> Salvar Transposição
+                    </Button>
                   </div>
                   <div className="flex gap-2">
                     <Button onClick={handleZoomOut} variant="secondary" disabled={!activeViewerSongId}>
