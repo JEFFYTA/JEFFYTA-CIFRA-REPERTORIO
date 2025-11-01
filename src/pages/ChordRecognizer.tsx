@@ -223,12 +223,13 @@ const ChordRecognizer = () => {
                   default: {
                     colors: {
                       brand: 'hsl(var(--primary))',
-                      brandAccent: 'hsl(217.2 91.2% 59.8%)', // Corrigido para um azul vibrante
+                      brandAccent: 'hsl(217.2 91.2% 59.8%)',
                     },
                   },
                 },
               }}
               theme="light"
+              initialView="sign_in" // Adicionado para iniciar sempre na tela de login
             />
           </CardContent>
         </Card>
