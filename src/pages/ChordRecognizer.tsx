@@ -223,7 +223,7 @@ const ChordRecognizer = () => {
                   default: {
                     colors: {
                       brand: 'hsl(var(--primary))',
-                      brandAccent: 'hsl(var(--primary-foreground))',
+                      brandAccent: 'hsl(217.2 91.2% 59.8%)', // Corrigido para um azul vibrante
                     },
                   },
                 },
