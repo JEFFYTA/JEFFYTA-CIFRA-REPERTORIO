@@ -39,7 +39,12 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
       toast.error("Erro ao carregar repertórios: " + error.message);
       console.error("Erro ao carregar repertórios:", error);
     } else {
-      setRepertoires(data || []);
+      // Mapear song_ids do Supabase para songIds para o tipo do frontend
+      const mappedRepertoires = (data || []).map(rep => ({
+        ...rep,
+        songIds: rep.song_ids || [], // Garante que é um array, mesmo se for null/undefined
+      }));
+      setRepertoires(mappedRepertoires);
     }
     setLoadingRepertoires(false);
   }, []);
@@ -84,9 +89,14 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
       toast.error("Erro ao criar repertório: " + error.message);
       console.error("Erro ao criar repertório:", error);
     } else if (data && data.length > 0) {
-      setRepertoires(prev => [...prev, data[0]]);
+      // Mapear o repertório recém-criado para o formato do frontend
+      const createdRepertoire = {
+        ...data[0],
+        songIds: data[0].song_ids || [],
+      };
+      setRepertoires(prev => [...prev, createdRepertoire]);
       setNewRepertoireName('');
-      toast.success(`Repertório "${data[0].name}" criado!`);
+      toast.success(`Repertório "${createdRepertoire.name}" criado!`);
     }
   };
 
