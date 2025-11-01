@@ -22,7 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { transposeChordLine } from "@/lib/chordUtils";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Save, Trash2, Maximize2, Minimize2, Copy, PlusCircle, Music, ListMusic, Search } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save, Trash2, Maximize2, Minimize2, Copy, PlusCircle, Music, ListMusic, Search, ZoomIn, ZoomOut } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Repertoire } from "@/types/repertoire";
 import { Song } from "@/types/song"; // Importar o tipo Song
@@ -37,6 +37,7 @@ const ChordRecognizer = () => {
   const [viewerTransposeDelta, setViewerTransposeDelta] = useState<number>(0);
   const [viewerSearchTerm, setViewerSearchTerm] = useState<string>('');
   const [showSearchResults, setShowSearchResults] = useState<boolean>(false);
+  const [viewerFontSize, setViewerFontSize] = useState<number>(1.2); // Estado para o tamanho da fonte do visualizador
 
   const [isSongsPanelOpen, setIsSongsPanelOpen] = useState<boolean>(false);
   const [isRepertoiresPanelOpen, setIsRepertoiresPanelOpen] = useState<boolean>(false);
@@ -224,6 +225,7 @@ const ChordRecognizer = () => {
     setViewerTransposeDelta(0);
     setViewerSearchTerm('');
     setShowSearchResults(false);
+    setViewerFontSize(1.2); // Resetar zoom ao abrir
 
     const repertoireSongs = rep.songIds
       .map(id => songs.find(s => s.id === id))
@@ -253,6 +255,15 @@ const ChordRecognizer = () => {
     setCurrentViewerSongIndex(0);
     setActiveViewerSongId(null);
     setShowSearchResults(false);
+    setViewerFontSize(1.2); // Resetar zoom ao fechar
+  };
+
+  const handleZoomIn = () => {
+    setViewerFontSize(prev => Math.min(prev + 0.1, 2.5)); // Limite máximo de zoom
+  };
+
+  const handleZoomOut = () => {
+    setViewerFontSize(prev => Math.max(prev - 0.1, 0.8)); // Limite mínimo de zoom
   };
 
   return (
@@ -300,6 +311,7 @@ const ChordRecognizer = () => {
                   setCurrentViewerSongIndex(0); 
                   setActiveViewerSongId(null); 
                   setShowSearchResults(false);
+                  setViewerFontSize(1.2); // Resetar zoom ao abrir
                 } else {
                   handleCloseViewer(); 
                 }
@@ -358,13 +370,21 @@ const ChordRecognizer = () => {
                       <p className="text-center text-gray-500 dark:text-gray-400 mt-2">Nenhuma música encontrada.</p>
                   )}
                 </div>
-                <div className="flex-1 p-4 overflow-auto font-mono text-lg leading-relaxed">
-                  <pre className="whitespace-pre-wrap">{getViewerContent()}</pre>
+                <div className="flex-1 p-4 overflow-auto font-mono leading-relaxed">
+                  <pre className="whitespace-pre-wrap" style={{ fontSize: `${viewerFontSize}rem` }}>{getViewerContent()}</pre>
                 </div>
                 <div className="flex justify-between p-4 border-t dark:border-gray-700">
                   <div className="flex gap-2">
                     <Button onClick={() => setViewerTransposeDelta(prev => prev - 1)} variant="secondary" disabled={!activeViewerSongId}>Transpor -1</Button>
                     <Button onClick={() => setViewerTransposeDelta(prev => prev + 1)} variant="secondary" disabled={!activeViewerSongId}>Transpor +1</Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={handleZoomOut} variant="secondary" disabled={!activeViewerSongId}>
+                      <ZoomOut className="h-4 w-4" />
+                    </Button>
+                    <Button onClick={handleZoomIn} variant="secondary" disabled={!activeViewerSongId}>
+                      <ZoomIn className="h-4 w-4" />
+                    </Button>
                   </div>
                   <div className="flex gap-2">
                     <Button
