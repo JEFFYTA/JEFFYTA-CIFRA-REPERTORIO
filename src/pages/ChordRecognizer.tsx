@@ -18,13 +18,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Switch } from "@/components/ui/switch"; // Importar o Switch
-import { Label } from "@/components/ui/label"; // Importar o Label
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { extrairCifras, transposeChordLine } from "@/lib/chordUtils";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Save, Trash2, Maximize2, Minimize2, Copy, PlusCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save, Trash2, Maximize2, Minimize2, Copy, PlusCircle, Music, ListMusic } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import { Repertoire } from "@/types/repertoire"; // Importar o novo tipo Repertoire
+import { Repertoire } from "@/types/repertoire";
+import MySongsPanel from "@/components/MySongsPanel"; // Importar o novo componente
+import MyRepertoiresPanel from "@/components/MyRepertoiresPanel"; // Importar o novo componente
 
 interface Song {
   id: string;
@@ -47,6 +49,10 @@ const ChordRecognizer = () => {
   const [repertoires, setRepertoires] = useState<Repertoire[]>([]);
   const [selectedRepertoireId, setSelectedRepertoireId] = useState<string | null>(null);
   const [newRepertoireName, setNewRepertoireName] = useState<string>('');
+
+  // State for controlling panel visibility
+  const [isSongsPanelOpen, setIsSongsPanelOpen] = useState<boolean>(false);
+  const [isRepertoiresPanelOpen, setIsRepertoiresPanelOpen] = useState<boolean>(false);
 
   // Load songs and repertoires from localStorage on initial render
   useEffect(() => {
@@ -345,174 +351,44 @@ const ChordRecognizer = () => {
         </CardContent>
       </Card>
 
-      <div className="w-full lg:w-80 flex flex-col gap-6">
-        <Card className="flex flex-col shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-xl text-center">Minhas Músicas</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col flex-1 p-4">
-            <div className="flex gap-2 mb-4">
-              <Input
-                placeholder="Título da música"
-                value={newSongTitle}
-                onChange={(e) => setNewSongTitle(e.target.value)}
-                className="flex-1"
-              />
-              <Button onClick={handleSaveSong} disabled={!inputText.trim() || !newSongTitle.trim()}>
-                <Save className="mr-2 h-4 w-4" /> Salvar
-              </Button>
-            </div>
-            <ScrollArea className="flex-1 border rounded-md p-2">
-              {songs.length === 0 ? (
-                <p className="text-center text-gray-500 dark:text-gray-400">Nenhuma música salva ainda.</p>
-              ) : (
-                <div className="space-y-2">
-                  {songs.map((song, index) => (
-                    <div
-                      key={song.id}
-                      className={cn(
-                        "flex items-center justify-between p-2 border rounded-md bg-white dark:bg-gray-700 shadow-sm",
-                        currentSongIndex === index && "bg-blue-50 dark:bg-blue-900 border-blue-500 ring-2 ring-blue-500"
-                      )}
-                    >
-                      <span className="font-medium truncate">{song.title}</span>
-                      <div className="flex gap-1 items-center">
-                        {selectedRepertoireId && (
-                          <div className="flex items-center space-x-2">
-                            <Switch
-                              id={`song-${song.id}-repertoire-toggle`}
-                              checked={selectedRepertoire?.songIds.includes(song.id)}
-                              onCheckedChange={(checked) => handleToggleSongInRepertoire(song.id, checked)}
-                            />
-                            <Label htmlFor={`song-${song.id}-repertoire-toggle`} className="sr-only">
-                              {selectedRepertoire?.songIds.includes(song.id) ? "Remover do repertório" : "Adicionar ao repertório"}
-                            </Label>
-                          </div>
-                        )}
-                        <Button
-                          onClick={() => handleLoadSong(index)}
-                          variant="ghost"
-                          size="sm"
-                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
-                        >
-                          Carregar
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Esta ação não pode ser desfeita. Isso excluirá permanentemente a música "{song.title}" de todas as listas e repertórios.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeleteSong(song.id)}>
-                                Excluir
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
-
-        <Card className="flex flex-col shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-xl text-center">Meus Repertórios</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col flex-1 p-4">
-            <div className="flex gap-2 mb-4">
-              <Input
-                placeholder="Nome do repertório"
-                value={newRepertoireName}
-                onChange={(e) => setNewRepertoireName(e.target.value)}
-                className="flex-1"
-              />
-              <Button onClick={handleCreateRepertoire} disabled={!newRepertoireName.trim()}>
-                <PlusCircle className="mr-2 h-4 w-4" /> Criar
-              </Button>
-            </div>
-            <ScrollArea className="flex-1 border rounded-md p-2">
-              {repertoires.length === 0 ? (
-                <p className="text-center text-gray-500 dark:text-gray-400">Nenhum repertório salvo ainda.</p>
-              ) : (
-                <div className="space-y-2">
-                  {repertoires.map((rep) => (
-                    <div
-                      key={rep.id}
-                      className={cn(
-                        "flex items-center justify-between p-2 border rounded-md bg-white dark:bg-gray-700 shadow-sm",
-                        selectedRepertoireId === rep.id && "bg-purple-50 dark:bg-purple-900 border-purple-500 ring-2 ring-purple-500"
-                      )}
-                    >
-                      <span className="font-medium truncate">{rep.name} ({rep.songIds.length})</span>
-                      <div className="flex gap-1">
-                        <Button
-                          onClick={() => handleSelectRepertoire(rep.id)}
-                          variant="ghost"
-                          size="sm"
-                          className="text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-200"
-                        >
-                          Selecionar
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Esta ação não pode ser desfeita. Isso excluirá permanentemente o repertório "{rep.name}". As músicas dentro dele não serão excluídas.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDeleteRepertoire(rep.id)}>
-                                Excluir
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </div>
-                  ))}
-                  {selectedRepertoireId && (
-                    <Button
-                      onClick={() => handleSelectRepertoire(null)}
-                      variant="outline"
-                      className="w-full mt-4"
-                    >
-                      Desselecionar Repertório
-                    </Button>
-                  )}
-                </div>
-              )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
+      {/* Botões para abrir os painéis laterais */}
+      <div className="w-full lg:w-auto flex lg:flex-col gap-4 justify-center lg:justify-start">
+        <Button onClick={() => setIsSongsPanelOpen(true)} className="w-full lg:w-auto">
+          <Music className="mr-2 h-4 w-4" /> Minhas Músicas
+        </Button>
+        <Button onClick={() => setIsRepertoiresPanelOpen(true)} className="w-full lg:w-auto">
+          <ListMusic className="mr-2 h-4 w-4" /> Meus Repertórios
+        </Button>
       </div>
+
+      {/* Componentes dos painéis laterais */}
+      <MySongsPanel
+        open={isSongsPanelOpen}
+        onOpenChange={setIsSongsPanelOpen}
+        songs={songs}
+        currentSongIndex={currentSongIndex}
+        newSongTitle={newSongTitle}
+        setNewSongTitle={setNewSongTitle}
+        handleSaveSong={handleSaveSong}
+        handleLoadSong={handleLoadSong}
+        handleDeleteSong={handleDeleteSong}
+        selectedRepertoireId={selectedRepertoireId}
+        selectedRepertoire={selectedRepertoire}
+        handleToggleSongInRepertoire={handleToggleSongInRepertoire}
+      />
+
+      <MyRepertoiresPanel
+        open={isRepertoiresPanelOpen}
+        onOpenChange={setIsRepertoiresPanelOpen}
+        repertoires={repertoires}
+        selectedRepertoireId={selectedRepertoireId}
+        setSelectedRepertoireId={setSelectedRepertoireId}
+        newRepertoireName={newRepertoireName}
+        setNewRepertoireName={setNewRepertoireName}
+        handleCreateRepertoire={handleCreateRepertoire}
+        handleSelectRepertoire={handleSelectRepertoire}
+        handleDeleteRepertoire={handleDeleteRepertoire}
+      />
     </div>
   );
 };
