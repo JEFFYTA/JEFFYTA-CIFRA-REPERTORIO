@@ -136,20 +136,32 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
   };
 
   const handleToggleSongInRepertoire = async (songId: string, isChecked: boolean) => {
-    if (!selectedRepertoireId) return;
+    console.log("handleToggleSongInRepertoire called:", { songId, isChecked, selectedRepertoireId });
+    if (!selectedRepertoireId) {
+      toast.error("Por favor, selecione um repertório primeiro.");
+      console.warn("No repertoire selected when trying to toggle song.");
+      return;
+    }
 
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) {
       toast.error("Você precisa estar logado para modificar repertórios.");
+      console.warn("User not logged in when trying to toggle song in repertoire.");
       return;
     }
 
     const currentRepertoire = repertoires.find(rep => rep.id === selectedRepertoireId);
-    if (!currentRepertoire) return;
+    if (!currentRepertoire) {
+      console.error("Selected repertoire not found in state:", selectedRepertoireId);
+      toast.error("Repertório selecionado não encontrado.");
+      return;
+    }
 
     const newSongIds = isChecked
       ? [...new Set([...currentRepertoire.songIds, songId])]
       : currentRepertoire.songIds.filter(id => id !== songId);
+
+    console.log("Attempting to update repertoire with new song IDs:", newSongIds);
 
     const { error } = await supabase
       .from('repertoires')
@@ -159,7 +171,7 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
 
     if (error) {
       toast.error("Erro ao atualizar repertório: " + error.message);
-      console.error("Erro ao atualizar repertório:", error);
+      console.error("Erro ao atualizar repertório no Supabase:", error);
     } else {
       setRepertoires(prev => prev.map(rep => {
         if (rep.id === selectedRepertoireId) {
@@ -175,6 +187,7 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
       } else {
         toast.info(`"${songTitle}" removida do repertório "${repertoireName}".`);
       }
+      console.log("Repertoire updated successfully in Supabase and local state.");
     }
   };
 
