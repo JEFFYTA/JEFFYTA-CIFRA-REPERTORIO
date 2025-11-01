@@ -15,7 +15,7 @@ import { useRepertoireManagement } from "@/hooks/useRepertoireManagement";
 import { supabase } from "@/integrations/supabase/client";
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
-import { transposeChordLine } from "@/lib/chordUtils"; // Importação padrão
+import { transposeChordLine } from "@/lib/chordUtils";
 
 const ChordRecognizer = () => {
   const [isViewerOpen, setIsViewerOpen] = useState<boolean>(false);
@@ -263,7 +263,7 @@ const ChordRecognizer = () => {
         open={isSongsPanelOpen}
         onOpenChange={setIsSongsPanelOpen}
         songs={songs}
-        currentSongIndex={currentSongIndex} {/* Simplificado aqui */}
+        currentSongIndex={currentSongIndex}
         newSongTitle={newSongTitle}
         setNewSongTitle={setNewSongTitle}
         handleSaveSong={handleSaveSong}
