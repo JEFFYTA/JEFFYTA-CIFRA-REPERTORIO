@@ -171,9 +171,7 @@ const ChordRecognizer = () => {
 
     const lowerCaseSearch = search.toLowerCase();
     let filtered = baseSongsList.filter(song =>
-      // Alterado para startsWith para o título, conforme solicitado
       song.title.toLowerCase().startsWith(lowerCaseSearch) ||
-      // Mantém includes para o conteúdo das cifras para busca mais abrangente
       song.extractedChords.toLowerCase().includes(lowerCaseSearch)
     );
 
@@ -243,16 +241,19 @@ const ChordRecognizer = () => {
   };
 
   const getViewerTitle = () => {
+    if (viewerSearchTerm.trim() === '') {
+      return "Visualizador de Cifras"; // Título genérico quando a busca está vazia
+    }
     if (viewerNavigableSongs.length === 0) {
-      return "Cifras em Tela Cheia";
+      return "Nenhuma música encontrada"; // Quando a busca não retorna resultados
     }
     const currentSong = viewerNavigableSongs[currentViewerSongIndex];
-    if (!currentSong) return "Cifras em Tela Cheia";
+    if (!currentSong) return "Visualizador de Cifras"; // Fallback, caso algo dê errado
 
     if (isRepertoireViewerActive && selectedRepertoire) {
       return `${selectedRepertoire.name} - ${currentSong.title}`;
     }
-    return currentSong.title;
+    return currentSong.title; // Título da música atual
   };
 
   const handleCopyToClipboard = async () => {
