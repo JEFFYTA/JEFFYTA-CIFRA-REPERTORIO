@@ -39,7 +39,16 @@ export const useSongManagement = ({ initialInputText, onInputTextChange }: UseSo
       toast.error("Erro ao carregar músicas: " + error.message);
       console.error("Erro ao carregar músicas:", error);
     } else {
-      setSongs(data || []);
+      // Mapear as propriedades snake_case do Supabase para camelCase
+      const mappedSongs = (data || []).map(song => ({
+        id: song.id,
+        user_id: song.user_id,
+        title: song.title,
+        originalContent: song.original_content,
+        extractedChords: song.extracted_chords,
+        created_at: song.created_at,
+      }));
+      setSongs(mappedSongs);
     }
     setLoadingSongs(false);
   }, []);
@@ -115,9 +124,18 @@ export const useSongManagement = ({ initialInputText, onInputTextChange }: UseSo
       toast.error("Erro ao salvar música: " + error.message);
       console.error("Erro ao salvar música:", error);
     } else if (data && data.length > 0) {
-      setSongs(prev => [...prev, data[0]]);
+      // Mapear a música recém-criada para o formato do frontend
+      const createdSong = {
+        id: data[0].id,
+        user_id: data[0].user_id,
+        title: data[0].title,
+        originalContent: data[0].original_content,
+        extractedChords: data[0].extracted_chords,
+        created_at: data[0].created_at,
+      };
+      setSongs(prev => [...prev, createdSong]);
       setNewSongTitle('');
-      toast.success(`Música "${data[0].title}" salva com sucesso!`);
+      toast.success(`Música "${createdSong.title}" salva com sucesso!`);
     }
   };
 
