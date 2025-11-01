@@ -57,6 +57,7 @@ const ChordRecognizer = () => {
   
   const [viewerNavigableSongs, setViewerNavigableSongs] = useState<Song[]>([]);
   const [currentViewerSongIndex, setCurrentViewerSongIndex] = useState<number>(0);
+  const [activeViewerSongId, setActiveViewerSongId] = useState<string | null>(null); // NOVO ESTADO
 
   const selectedRepertoire = selectedRepertoireId
     ? repertoires.find(rep => rep.id === selectedRepertoireId)
@@ -159,7 +160,7 @@ const ChordRecognizer = () => {
     toast.success("Música excluída.");
   };
 
-  const prepareViewerSongs = useCallback((search: string, isRepertoireMode: boolean, initialSongId?: string) => {
+  const prepareViewerSongs = useCallback((search: string, isRepertoireMode: boolean) => {
     let baseSongsList: Song[] = [];
     if (isRepertoireMode && selectedRepertoire) {
       baseSongsList = selectedRepertoire.songIds
@@ -175,58 +176,53 @@ const ChordRecognizer = () => {
       song.extractedChords.toLowerCase().includes(lowerCaseSearch)
     );
 
-    // Ordena alfabeticamente pelo título
     filtered.sort((a, b) => a.title.localeCompare(b.title));
 
     setViewerNavigableSongs(filtered);
-
-    let newCurrentIndex = 0;
-    if (initialSongId) {
-      const index = filtered.findIndex(s => s.id === initialSongId);
-      if (index !== -1) {
-        newCurrentIndex = index;
-      } else if (filtered.length > 0) {
-        newCurrentIndex = 0;
-      }
-    } else if (filtered.length > 0) {
-      newCurrentIndex = 0;
-    }
-    setCurrentViewerSongIndex(newCurrentIndex);
+    // Não define activeViewerSongId ou currentViewerSongIndex aqui automaticamente
   }, [songs, selectedRepertoire]);
 
   useEffect(() => {
     if (isViewerOpen) {
-      // Re-prepare songs when search term changes, maintaining current song if possible
-      const currentSongId = viewerNavigableSongs[currentViewerSongIndex]?.id;
-      prepareViewerSongs(viewerSearchTerm, isRepertoireViewerActive, currentSongId);
+      prepareViewerSongs(viewerSearchTerm, isRepertoireViewerActive);
+      // Quando o termo de busca muda, limpa a música exibida
+      setActiveViewerSongId(null);
+      setCurrentViewerSongIndex(0); // Reseta o índice para navegação
     }
   }, [viewerSearchTerm, isViewerOpen, isRepertoireViewerActive, prepareViewerSongs]);
 
+  const handleSelectViewerSong = (songId: string) => {
+    setActiveViewerSongId(songId);
+    const index = viewerNavigableSongs.findIndex(s => s.id === songId);
+    if (index !== -1) {
+      setCurrentViewerSongIndex(index);
+    }
+    setViewerTransposeDelta(0); // Reseta a transposição para a nova música
+  };
+
   const handleNextSong = () => {
-    if (viewerNavigableSongs.length === 0) return;
+    if (!activeViewerSongId || viewerNavigableSongs.length === 0) return;
     const nextIndex = (currentViewerSongIndex + 1) % viewerNavigableSongs.length;
+    setActiveViewerSongId(viewerNavigableSongs[nextIndex].id);
     setCurrentViewerSongIndex(nextIndex);
-    setViewerTransposeDelta(0); // Reset transposition for new song
+    setViewerTransposeDelta(0);
   };
 
   const handlePreviousSong = () => {
-    if (viewerNavigableSongs.length === 0) return;
+    if (!activeViewerSongId || viewerNavigableSongs.length === 0) return;
     const prevIndex = (currentViewerSongIndex - 1 + viewerNavigableSongs.length) % viewerNavigableSongs.length;
+    setActiveViewerSongId(viewerNavigableSongs[prevIndex].id);
     setCurrentViewerSongIndex(prevIndex);
-    setViewerTransposeDelta(0); // Reset transposition for new song
+    setViewerTransposeDelta(0);
   };
 
   const getViewerContent = () => {
-    // Se o termo de busca estiver vazio, o conteúdo deve ser em branco
-    if (viewerSearchTerm.trim() === '') {
-      return '';
+    // Se não houver música ativa, retorna uma mensagem ou vazio
+    if (!activeViewerSongId) {
+      return viewerSearchTerm.trim() ? "Nenhuma música encontrada com este termo." : "Busque por uma música para começar.";
     }
 
-    if (viewerNavigableSongs.length === 0) {
-      return "Nenhuma música encontrada com este termo.";
-    }
-
-    const currentSong = viewerNavigableSongs[currentViewerSongIndex];
+    const currentSong = viewerNavigableSongs.find(s => s.id === activeViewerSongId);
     if (!currentSong) return '';
 
     let contentToDisplay = currentSong.extractedChords;
@@ -241,19 +237,16 @@ const ChordRecognizer = () => {
   };
 
   const getViewerTitle = () => {
-    if (viewerSearchTerm.trim() === '') {
-      return "Visualizador de Cifras"; // Título genérico quando a busca está vazia
+    if (!activeViewerSongId) {
+      return viewerSearchTerm.trim() ? "Nenhuma música encontrada" : "Visualizador de Cifras";
     }
-    if (viewerNavigableSongs.length === 0) {
-      return "Nenhuma música encontrada"; // Quando a busca não retorna resultados
-    }
-    const currentSong = viewerNavigableSongs[currentViewerSongIndex];
-    if (!currentSong) return "Visualizador de Cifras"; // Fallback, caso algo dê errado
+    const currentSong = viewerNavigableSongs.find(s => s.id === activeViewerSongId);
+    if (!currentSong) return "Visualizador de Cifras";
 
     if (isRepertoireViewerActive && selectedRepertoire) {
       return `${selectedRepertoire.name} - ${currentSong.title}`;
     }
-    return currentSong.title; // Título da música atual
+    return currentSong.title;
   };
 
   const handleCopyToClipboard = async () => {
@@ -335,8 +328,8 @@ const ChordRecognizer = () => {
     setIsRepertoireViewerActive(true);
     setViewerTransposeDelta(0);
     setViewerSearchTerm(''); // Reset search when opening repertoire viewer
+    setActiveViewerSongId(null); // Garante que nenhuma música esteja ativa inicialmente
 
-    // No initial song ID for repertoire viewer, it will be empty until search
     prepareViewerSongs('', true); 
 
     setIsViewerOpen(true);
@@ -350,6 +343,7 @@ const ChordRecognizer = () => {
     setViewerSearchTerm(''); // Reset search term
     setViewerNavigableSongs([]); // Reset navigable songs
     setCurrentViewerSongIndex(0); // Reset current index
+    setActiveViewerSongId(null); // Reset active song
   };
 
   return (
@@ -395,6 +389,7 @@ const ChordRecognizer = () => {
                   setViewerSearchTerm(''); // Reset search term
                   setViewerNavigableSongs([]); // Start with an empty list
                   setCurrentViewerSongIndex(0); // Reset index
+                  setActiveViewerSongId(null); // Reset active song
                 } else { // When dialog is closing
                   handleCloseViewer(); // Ensure all viewer states are reset
                 }
@@ -425,26 +420,48 @@ const ChordRecognizer = () => {
                       className="pl-9 w-full"
                     />
                   </div>
+                  {viewerSearchTerm.trim() !== '' && viewerNavigableSongs.length > 0 && (
+                      <ScrollArea className="mt-2 h-40 border rounded-md">
+                          <div className="p-2 space-y-1">
+                              {viewerNavigableSongs.map((song) => (
+                                  <Button
+                                      key={song.id}
+                                      variant="ghost"
+                                      className={cn(
+                                          "w-full justify-start",
+                                          activeViewerSongId === song.id && "bg-accent text-accent-foreground"
+                                      )}
+                                      onClick={() => handleSelectViewerSong(song.id)}
+                                  >
+                                      {song.title}
+                                  </Button>
+                              ))}
+                          </div>
+                      </ScrollArea>
+                  )}
+                  {viewerSearchTerm.trim() !== '' && viewerNavigableSongs.length === 0 && (
+                      <p className="text-center text-gray-500 dark:text-gray-400 mt-2">Nenhuma música encontrada.</p>
+                  )}
                 </div>
                 <div className="flex-1 p-4 overflow-auto font-mono text-lg leading-relaxed">
                   <pre className="whitespace-pre-wrap">{getViewerContent()}</pre>
                 </div>
                 <div className="flex justify-between p-4 border-t dark:border-gray-700">
                   <div className="flex gap-2">
-                    <Button onClick={() => setViewerTransposeDelta(prev => prev - 1)} variant="secondary">Transpor -1</Button>
-                    <Button onClick={() => setViewerTransposeDelta(prev => prev + 1)} variant="secondary">Transpor +1</Button>
+                    <Button onClick={() => setViewerTransposeDelta(prev => prev - 1)} variant="secondary" disabled={!activeViewerSongId}>Transpor -1</Button>
+                    <Button onClick={() => setViewerTransposeDelta(prev => prev + 1)} variant="secondary" disabled={!activeViewerSongId}>Transpor +1</Button>
                   </div>
                   <div className="flex gap-2">
                     <Button
                       onClick={handlePreviousSong}
-                      disabled={viewerNavigableSongs.length <= 1 || viewerSearchTerm.trim() === ''}
+                      disabled={!activeViewerSongId || viewerNavigableSongs.length <= 1}
                       variant="outline"
                     >
                       <ChevronLeft className="h-4 w-4" /> Anterior
                     </Button>
                     <Button
                       onClick={handleNextSong}
-                      disabled={viewerNavigableSongs.length <= 1 || viewerSearchTerm.trim() === ''}
+                      disabled={!activeViewerSongId || viewerNavigableSongs.length <= 1}
                       variant="outline"
                     >
                       Próxima <ChevronRight className="h-4 w-4" />
