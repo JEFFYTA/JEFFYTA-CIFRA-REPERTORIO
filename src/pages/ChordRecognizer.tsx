@@ -45,7 +45,7 @@ const ChordRecognizer = () => {
   const [isViewerOpen, setIsViewerOpen] = useState<boolean>(false);
   const [viewerTransposeDelta, setViewerTransposeDelta] = useState<number>(0);
   const [viewerSearchTerm, setViewerSearchTerm] = useState<string>('');
-  const [showSearchResults, setShowSearchResults] = useState<boolean>(false); // NOVO ESTADO
+  const [showSearchResults, setShowSearchResults] = useState<boolean>(false);
 
   const [repertoires, setRepertoires] = useState<Repertoire[]>([]);
   const [selectedRepertoireId, setSelectedRepertoireId] = useState<string | null>(null);
@@ -187,8 +187,11 @@ const ChordRecognizer = () => {
     if (isViewerOpen) {
       prepareViewerSongs(viewerSearchTerm, isRepertoireViewerActive);
       // Quando o termo de busca muda, limpa a música exibida
-      setActiveViewerSongId(null);
-      setCurrentViewerSongIndex(0); // Reseta o índice para navegação
+      // Mas apenas se não estiver no modo de repertório ativo
+      if (!isRepertoireViewerActive) {
+        setActiveViewerSongId(null);
+        setCurrentViewerSongIndex(0); // Reseta o índice para navegação
+      }
     }
   }, [viewerSearchTerm, isViewerOpen, isRepertoireViewerActive, prepareViewerSongs]);
 
@@ -221,7 +224,19 @@ const ChordRecognizer = () => {
   const getViewerContent = () => {
     // Se não houver música ativa, retorna uma mensagem ou vazio
     if (!activeViewerSongId) {
-      return viewerSearchTerm.trim() ? "Nenhuma música encontrada com este termo." : "Busque por uma música para começar.";
+      // Se estiver no modo de busca e não encontrou nada
+      if (!isRepertoireViewerActive && viewerSearchTerm.trim() !== '' && viewerNavigableSongs.length === 0) {
+        return "Nenhuma música encontrada com este termo.";
+      }
+      // Se estiver no modo de busca e ainda não buscou
+      if (!isRepertoireViewerActive && viewerSearchTerm.trim() === '') {
+        return "Busque por uma música para começar.";
+      }
+      // Se estiver no modo de repertório e não há músicas
+      if (isRepertoireViewerActive && viewerNavigableSongs.length === 0) {
+        return "Este repertório não possui músicas.";
+      }
+      return ''; // Fallback
     }
 
     const currentSong = viewerNavigableSongs.find(s => s.id === activeViewerSongId);
@@ -240,7 +255,10 @@ const ChordRecognizer = () => {
 
   const getViewerTitle = () => {
     if (!activeViewerSongId) {
-      return viewerSearchTerm.trim() ? "Nenhuma música encontrada" : "Visualizador de Cifras";
+      if (!isRepertoireViewerActive && viewerSearchTerm.trim() !== '' && viewerNavigableSongs.length === 0) {
+        return "Nenhuma música encontrada";
+      }
+      return "Visualizador de Cifras";
     }
     const currentSong = viewerNavigableSongs.find(s => s.id === activeViewerSongId);
     if (!currentSong) return "Visualizador de Cifras";
@@ -330,10 +348,23 @@ const ChordRecognizer = () => {
     setIsRepertoireViewerActive(true);
     setViewerTransposeDelta(0);
     setViewerSearchTerm(''); // Reset search when opening repertoire viewer
-    setActiveViewerSongId(null); // Garante que nenhuma música esteja ativa inicialmente
-    setShowSearchResults(true); // Mostra a lista de resultados ao abrir o visualizador de repertório
+    setShowSearchResults(false); // Oculta a lista de resultados no modo repertório
 
-    prepareViewerSongs('', true); 
+    // Prepara as músicas do repertório e as ordena
+    const repertoireSongs = rep.songIds
+      .map(id => songs.find(s => s.id === id))
+      .filter((s): s is Song => s !== undefined)
+      .sort((a, b) => a.title.localeCompare(b.title));
+
+    setViewerNavigableSongs(repertoireSongs);
+
+    if (repertoireSongs.length > 0) {
+      setActiveViewerSongId(repertoireSongs[0].id); // Seleciona a primeira música
+      setCurrentViewerSongIndex(0);
+    } else {
+      setActiveViewerSongId(null);
+      setCurrentViewerSongIndex(0);
+    }
 
     setIsViewerOpen(true);
     toast.info(`Abrindo repertório "${rep.name}" em tela cheia.`);
@@ -388,15 +419,16 @@ const ChordRecognizer = () => {
               onOpenChange={(open) => {
                 setIsViewerOpen(open);
                 if (open) { // When dialog is opening
-                  setIsRepertoireViewerActive(false); // Default to single song mode
+                  // Default states for single song mode, will be overridden if repertoire viewer is opened
+                  setIsRepertoireViewerActive(false); 
                   setViewerTransposeDelta(0);
-                  setViewerSearchTerm(''); // Reset search term
-                  setViewerNavigableSongs([]); // Start with an empty list
-                  setCurrentViewerSongIndex(0); // Reset index
-                  setActiveViewerSongId(null); // Reset active song
-                  setShowSearchResults(true); // Mostra a lista de resultados ao abrir
+                  setViewerSearchTerm(''); 
+                  setViewerNavigableSongs([]); 
+                  setCurrentViewerSongIndex(0); 
+                  setActiveViewerSongId(null); 
+                  setShowSearchResults(false); // Default to hidden
                 } else { // When dialog is closing
-                  handleCloseViewer(); // Ensure all viewer states are reset
+                  handleCloseViewer(); 
                 }
               }}
             >
@@ -416,19 +448,21 @@ const ChordRecognizer = () => {
                   </DialogTitle>
                 </DialogHeader>
                 <div className="p-4 border-b dark:border-gray-700">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400" />
-                    <Input
-                      placeholder="Buscar músicas na tela cheia..."
-                      value={viewerSearchTerm}
-                      onChange={(e) => {
-                        setViewerSearchTerm(e.target.value);
-                        setShowSearchResults(true); // Mostra a lista de resultados ao digitar
-                      }}
-                      className="pl-9 w-full"
-                    />
-                  </div>
-                  {showSearchResults && viewerSearchTerm.trim() !== '' && viewerNavigableSongs.length > 0 && (
+                  {!isRepertoireViewerActive && ( // Só mostra a busca se NÃO estiver no modo repertório
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400" />
+                      <Input
+                        placeholder="Buscar músicas na tela cheia..."
+                        value={viewerSearchTerm}
+                        onChange={(e) => {
+                          setViewerSearchTerm(e.target.value);
+                          setShowSearchResults(true); // Mostra a lista de resultados ao digitar
+                        }}
+                        className="pl-9 w-full"
+                      />
+                    </div>
+                  )}
+                  {!isRepertoireViewerActive && showSearchResults && viewerSearchTerm.trim() !== '' && viewerNavigableSongs.length > 0 && (
                       <ScrollArea className="mt-2 h-40 border rounded-md">
                           <div className="p-2 space-y-1">
                               {viewerNavigableSongs.map((song) => (
@@ -447,7 +481,7 @@ const ChordRecognizer = () => {
                           </div>
                       </ScrollArea>
                   )}
-                  {showSearchResults && viewerSearchTerm.trim() !== '' && viewerNavigableSongs.length === 0 && (
+                  {!isRepertoireViewerActive && showSearchResults && viewerSearchTerm.trim() !== '' && viewerNavigableSongs.length === 0 && (
                       <p className="text-center text-gray-500 dark:text-gray-400 mt-2">Nenhuma música encontrada.</p>
                   )}
                 </div>
