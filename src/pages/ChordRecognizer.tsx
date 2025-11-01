@@ -20,36 +20,23 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { extrairCifras, transposeChordLine, extractSongTitle } from "@/lib/chordUtils"; // Importar extractSongTitle
+import { transposeChordLine } from "@/lib/chordUtils";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Save, Trash2, Maximize2, Minimize2, Copy, PlusCircle, Music, ListMusic, Search } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Repertoire } from "@/types/repertoire";
+import { Song } from "@/types/song"; // Importar o tipo Song
 import MySongsPanel from "@/components/MySongsPanel";
 import MyRepertoiresPanel from "@/components/MyRepertoiresPanel";
+import { useSongManagement } from "@/hooks/useSongManagement";
+import { useRepertoireManagement } from "@/hooks/useRepertoireManagement";
 
-interface Song {
-  id: string;
-  title: string;
-  originalContent: string;
-  extractedChords: string;
-}
 
 const ChordRecognizer = () => {
-  const [inputText, setInputText] = useState<string>('');
-  const [outputText, setOutputText] = useState<string>('');
-  const [originalOutputText, setOriginalOutputText] = useState<string>('');
-  const [songs, setSongs] = useState<Song[]>([]);
-  const [currentSongIndex, setCurrentSongIndex] = useState<number | null>(null);
-  const [newSongTitle, setNewSongTitle] = useState<string>('');
   const [isViewerOpen, setIsViewerOpen] = useState<boolean>(false);
   const [viewerTransposeDelta, setViewerTransposeDelta] = useState<number>(0);
   const [viewerSearchTerm, setViewerSearchTerm] = useState<string>('');
   const [showSearchResults, setShowSearchResults] = useState<boolean>(false);
-
-  const [repertoires, setRepertoires] = useState<Repertoire[]>([]);
-  const [selectedRepertoireId, setSelectedRepertoireId] = useState<string | null>(null);
-  const [newRepertoireName, setNewRepertoireName] = useState<string>('');
 
   const [isSongsPanelOpen, setIsSongsPanelOpen] = useState<boolean>(false);
   const [isRepertoiresPanelOpen, setIsRepertoiresPanelOpen] = useState<boolean>(false);
@@ -60,54 +47,42 @@ const ChordRecognizer = () => {
   const [currentViewerSongIndex, setCurrentViewerSongIndex] = useState<number>(0);
   const [activeViewerSongId, setActiveViewerSongId] = useState<string | null>(null);
 
-  const selectedRepertoire = selectedRepertoireId
-    ? repertoires.find(rep => rep.id === selectedRepertoireId)
-    : null;
+  // Usando o hook useSongManagement
+  const {
+    inputText,
+    setInputText,
+    outputText,
+    setOutputText,
+    originalOutputText,
+    setOriginalOutputText,
+    songs,
+    setSongs, // Passar setSongs para o hook de repertório
+    currentSongIndex,
+    newSongTitle,
+    setNewSongTitle,
+    handleClear,
+    handleSaveSong,
+    handleLoadSong,
+    handleDeleteSong,
+  } = useSongManagement({
+    initialInputText: '',
+    onInputTextChange: (text) => { /* No-op, handled internally by hook */ }
+  });
 
-  useEffect(() => {
-    const storedSongs = localStorage.getItem('chordRecognizerSongs');
-    if (storedSongs) {
-      setSongs(JSON.parse(storedSongs));
-    }
-    const storedRepertoires = localStorage.getItem('chordRecognizerRepertoires');
-    if (storedRepertoires) {
-      setRepertoires(JSON.parse(storedRepertoires));
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('chordRecognizerSongs', JSON.stringify(songs));
-  }, [songs]);
-
-  useEffect(() => {
-    localStorage.setItem('chordRecognizerRepertoires', JSON.stringify(repertoires));
-  }, [repertoires]);
-
-  const processInput = useCallback((text: string) => {
-    const extracted = extrairCifras(text);
-    setOutputText(extracted);
-    setOriginalOutputText(extracted);
-  }, []);
-
-  useEffect(() => {
-    processInput(inputText);
-    // NOVO: Extrair título quando inputText muda
-    const detectedTitle = extractSongTitle(inputText);
-    if (detectedTitle) {
-      setNewSongTitle(detectedTitle);
-    } else {
-      setNewSongTitle(''); // Limpar se nenhum título for detectado
-    }
-  }, [inputText, processInput]);
-
-  const handleClear = () => {
-    setInputText('');
-    setOutputText('');
-    setOriginalOutputText('');
-    setNewSongTitle('');
-    setCurrentSongIndex(null);
-    toast.info("Input e output limpos.");
-  };
+  // Usando o hook useRepertoireManagement
+  const {
+    repertoires,
+    setRepertoires, // Passar setRepertoires para o hook de músicas se necessário (não é o caso aqui)
+    selectedRepertoireId,
+    setSelectedRepertoireId,
+    newRepertoireName,
+    setNewRepertoireName,
+    selectedRepertoire,
+    handleCreateRepertoire,
+    handleSelectRepertoire,
+    handleDeleteRepertoire,
+    handleToggleSongInRepertoire,
+  } = useRepertoireManagement({ songs, setSongs }); // Passar songs e setSongs para o hook de repertório
 
   const handleTranspose = (delta: number) => {
     if (!outputText) return;
@@ -122,50 +97,6 @@ const ChordRecognizer = () => {
       setOutputText(originalOutputText);
       toast.info("Cifras restauradas para a versão original.");
     }
-  };
-
-  const handleSaveSong = () => {
-    if (!inputText.trim() || !outputText.trim()) {
-      toast.error("Não há música para salvar. Por favor, cole o conteúdo primeiro.");
-      return;
-    }
-    if (!newSongTitle.trim()) {
-      toast.error("Por favor, insira um título para a música.");
-      return;
-    }
-
-    const newSong: Song = {
-      id: Date.now().toString(),
-      title: newSongTitle.trim(),
-      originalContent: inputText,
-      extractedChords: outputText,
-    };
-    setSongs(prev => [...prev, newSong]);
-    setNewSongTitle('');
-    toast.success(`Música "${newSong.title}" salva com sucesso!`);
-  };
-
-  const handleLoadSong = (index: number) => {
-    const songToLoad = songs[index];
-    if (songToLoad) {
-      setInputText(songToLoad.originalContent);
-      setCurrentSongIndex(index);
-      setNewSongTitle(songToLoad.title);
-      // No toast here, as it might be called internally by repertoire viewer
-    }
-  };
-
-  const handleDeleteSong = (id: string) => {
-    setSongs(prev => prev.filter(song => song.id !== id));
-    setRepertoires(prev => prev.map(rep => ({
-      ...rep,
-      songIds: rep.songIds.filter(songId => songId !== id)
-    })));
-
-    if (currentSongIndex !== null && songs[currentSongIndex]?.id === id) {
-      handleClear();
-    }
-    toast.success("Música excluída.");
   };
 
   const prepareViewerSongs = useCallback((search: string, isRepertoireMode: boolean) => {
@@ -187,17 +118,14 @@ const ChordRecognizer = () => {
     filtered.sort((a, b) => a.title.localeCompare(b.title));
 
     setViewerNavigableSongs(filtered);
-    // Não define activeViewerSongId ou currentViewerSongIndex aqui automaticamente
   }, [songs, selectedRepertoire]);
 
   useEffect(() => {
     if (isViewerOpen) {
       prepareViewerSongs(viewerSearchTerm, isRepertoireViewerActive);
-      // Quando o termo de busca muda, limpa a música exibida
-      // Mas apenas se não estiver no modo de repertório ativo
       if (!isRepertoireViewerActive) {
         setActiveViewerSongId(null);
-        setCurrentViewerSongIndex(0); // Reseta o índice para navegação
+        setCurrentViewerSongIndex(0);
       }
     }
   }, [viewerSearchTerm, isViewerOpen, isRepertoireViewerActive, prepareViewerSongs]);
@@ -208,8 +136,8 @@ const ChordRecognizer = () => {
     if (index !== -1) {
       setCurrentViewerSongIndex(index);
     }
-    setViewerTransposeDelta(0); // Reseta a transposição para a nova música
-    setShowSearchResults(false); // Oculta a lista de resultados após a seleção
+    setViewerTransposeDelta(0);
+    setShowSearchResults(false);
   };
 
   const handleNextSong = () => {
@@ -229,21 +157,17 @@ const ChordRecognizer = () => {
   };
 
   const getViewerContent = () => {
-    // Se não houver música ativa, retorna uma mensagem ou vazio
     if (!activeViewerSongId) {
-      // Se estiver no modo de busca e não encontrou nada
       if (!isRepertoireViewerActive && viewerSearchTerm.trim() !== '' && viewerNavigableSongs.length === 0) {
         return "Nenhuma música encontrada com este termo.";
       }
-      // Se estiver no modo de busca e ainda não buscou
       if (!isRepertoireViewerActive && viewerSearchTerm.trim() === '') {
         return "Busque por uma música para começar.";
       }
-      // Se estiver no modo de repertório e não há músicas
       if (isRepertoireViewerActive && viewerNavigableSongs.length === 0) {
         return "Este repertório não possui músicas.";
       }
-      return ''; // Fallback
+      return '';
     }
 
     const currentSong = viewerNavigableSongs.find(s => s.id === activeViewerSongId);
@@ -253,7 +177,6 @@ const ChordRecognizer = () => {
 
     if (contentToDisplay) {
       let lines = contentToDisplay.split('\n');
-      // Apply transposition
       lines = lines.map(line => transposeChordLine(line, viewerTransposeDelta));
       return lines.join('\n');
     }
@@ -286,61 +209,6 @@ const ChordRecognizer = () => {
     }
   };
 
-  const handleCreateRepertoire = () => {
-    if (!newRepertoireName.trim()) {
-      toast.error("Por favor, insira um nome para o repertório.");
-      return;
-    }
-    const newRep: Repertoire = {
-      id: Date.now().toString(),
-      name: newRepertoireName.trim(),
-      songIds: [],
-    };
-    setRepertoires(prev => [...prev, newRep]);
-    setNewRepertoireName('');
-    toast.success(`Repertório "${newRep.name}" criado!`);
-  };
-
-  const handleSelectRepertoire = (id: string | null) => {
-    setSelectedRepertoireId(id);
-    if (id) {
-      const selectedRep = repertoires.find(rep => rep.id === id);
-      toast.info(`Repertório "${selectedRep?.name}" selecionado.`);
-    } else {
-      toast.info("Nenhum repertório selecionado.");
-    }
-  };
-
-  const handleDeleteRepertoire = (id: string) => {
-    setRepertoires(prev => prev.filter(rep => rep.id !== id));
-    if (selectedRepertoireId === id) {
-      setSelectedRepertoireId(null);
-    }
-    toast.success("Repertório excluído.");
-  };
-
-  const handleToggleSongInRepertoire = (songId: string, isChecked: boolean) => {
-    if (!selectedRepertoireId) return;
-
-    setRepertoires(prev => prev.map(rep => {
-      if (rep.id === selectedRepertoireId) {
-        const newSongIds = isChecked
-          ? [...new Set([...rep.songIds, songId])]
-          : rep.songIds.filter(id => id !== songId);
-        return { ...rep, songIds: newSongIds };
-      }
-      return rep;
-    }));
-
-    const songTitle = songs.find(s => s.id === songId)?.title || "Música";
-    const repertoireName = repertoires.find(rep => rep.id === selectedRepertoireId)?.name || "repertório";
-    if (isChecked) {
-      toast.success(`"${songTitle}" adicionada ao repertório "${repertoireName}".`);
-    } else {
-      toast.info(`"${songTitle}" removida do repertório "${repertoireName}".`);
-    }
-  };
-
   const handleOpenRepertoireViewer = () => {
     if (!selectedRepertoireId) {
       toast.error("Nenhum repertório selecionado.");
@@ -354,10 +222,9 @@ const ChordRecognizer = () => {
 
     setIsRepertoireViewerActive(true);
     setViewerTransposeDelta(0);
-    setViewerSearchTerm(''); // Reset search when opening repertoire viewer
-    setShowSearchResults(false); // Oculta a lista de resultados no modo repertório
+    setViewerSearchTerm('');
+    setShowSearchResults(false);
 
-    // Prepara as músicas do repertório e as ordena
     const repertoireSongs = rep.songIds
       .map(id => songs.find(s => s.id === id))
       .filter((s): s is Song => s !== undefined)
@@ -366,7 +233,7 @@ const ChordRecognizer = () => {
     setViewerNavigableSongs(repertoireSongs);
 
     if (repertoireSongs.length > 0) {
-      setActiveViewerSongId(repertoireSongs[0].id); // Seleciona a primeira música
+      setActiveViewerSongId(repertoireSongs[0].id);
       setCurrentViewerSongIndex(0);
     } else {
       setActiveViewerSongId(null);
@@ -381,11 +248,11 @@ const ChordRecognizer = () => {
     setIsViewerOpen(false);
     setIsRepertoireViewerActive(false);
     setViewerTransposeDelta(0);
-    setViewerSearchTerm(''); // Reset search term
-    setViewerNavigableSongs([]); // Reset navigable songs
-    setCurrentViewerSongIndex(0); // Reset current index
-    setActiveViewerSongId(null); // Reset active song
-    setShowSearchResults(false); // Garante que a lista de resultados esteja oculta ao fechar
+    setViewerSearchTerm('');
+    setViewerNavigableSongs([]);
+    setCurrentViewerSongIndex(0);
+    setActiveViewerSongId(null);
+    setShowSearchResults(false);
   };
 
   return (
@@ -425,16 +292,15 @@ const ChordRecognizer = () => {
               open={isViewerOpen}
               onOpenChange={(open) => {
                 setIsViewerOpen(open);
-                if (open) { // When dialog is opening
-                  // Default states for single song mode, will be overridden if repertoire viewer is opened
+                if (open) {
                   setIsRepertoireViewerActive(false); 
                   setViewerTransposeDelta(0);
                   setViewerSearchTerm(''); 
                   setViewerNavigableSongs([]); 
                   setCurrentViewerSongIndex(0); 
                   setActiveViewerSongId(null); 
-                  setShowSearchResults(false); // Default to hidden
-                } else { // When dialog is closing
+                  setShowSearchResults(false);
+                } else {
                   handleCloseViewer(); 
                 }
               }}
@@ -443,7 +309,7 @@ const ChordRecognizer = () => {
                 <Button
                   variant="outline"
                   className="ml-auto"
-                  disabled={songs.length === 0} // Disable if no saved songs at all
+                  disabled={songs.length === 0}
                 >
                   <Maximize2 className="mr-2 h-4 w-4" /> Tela Cheia
                 </Button>
@@ -455,7 +321,7 @@ const ChordRecognizer = () => {
                   </DialogTitle>
                 </DialogHeader>
                 <div className="p-4 border-b dark:border-gray-700">
-                  {!isRepertoireViewerActive && ( // Só mostra a busca se NÃO estiver no modo repertório
+                  {!isRepertoireViewerActive && (
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400" />
                       <Input
@@ -463,7 +329,7 @@ const ChordRecognizer = () => {
                         value={viewerSearchTerm}
                         onChange={(e) => {
                           setViewerSearchTerm(e.target.value);
-                          setShowSearchResults(true); // Mostra a lista de resultados ao digitar
+                          setShowSearchResults(true);
                         }}
                         className="pl-9 w-full"
                       />
