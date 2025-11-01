@@ -38,6 +38,7 @@ const ChordRecognizer = () => {
   const [viewerSearchTerm, setViewerSearchTerm] = useState<string>('');
   const [showSearchResults, setShowSearchResults] = useState<boolean>(false);
   const [viewerFontSize, setViewerFontSize] = useState<number>(1.2); // Estado para o tamanho da fonte do visualizador
+  const [viewerEditedContent, setViewerEditedContent] = useState<string>(''); // Novo estado para o conteúdo editável do visualizador
 
   const [isSongsPanelOpen, setIsSongsPanelOpen] = useState<boolean>(false);
   const [isRepertoiresPanelOpen, setIsRepertoiresPanelOpen] = useState<boolean>(false);
@@ -127,6 +128,7 @@ const ChordRecognizer = () => {
       if (!isRepertoireViewerActive) {
         setActiveViewerSongId(null);
         setCurrentViewerSongIndex(0);
+        setViewerEditedContent(''); // Limpar ao abrir sem repertório ativo
       }
     }
   }, [viewerSearchTerm, isViewerOpen, isRepertoireViewerActive, prepareViewerSongs]);
@@ -136,6 +138,7 @@ const ChordRecognizer = () => {
     const index = viewerNavigableSongs.findIndex(s => s.id === songId);
     if (index !== -1) {
       setCurrentViewerSongIndex(index);
+      setViewerEditedContent(viewerNavigableSongs[index].extractedChords); // Inicializar conteúdo editável
     }
     setViewerTransposeDelta(0);
     setShowSearchResults(false);
@@ -144,17 +147,21 @@ const ChordRecognizer = () => {
   const handleNextSong = () => {
     if (!activeViewerSongId || viewerNavigableSongs.length === 0) return;
     const nextIndex = (currentViewerSongIndex + 1) % viewerNavigableSongs.length;
-    setActiveViewerSongId(viewerNavigableSongs[nextIndex].id);
+    const nextSong = viewerNavigableSongs[nextIndex];
+    setActiveViewerSongId(nextSong.id);
     setCurrentViewerSongIndex(nextIndex);
     setViewerTransposeDelta(0);
+    setViewerEditedContent(nextSong.extractedChords); // Inicializar conteúdo editável
   };
 
   const handlePreviousSong = () => {
     if (!activeViewerSongId || viewerNavigableSongs.length === 0) return;
     const prevIndex = (currentViewerSongIndex - 1 + viewerNavigableSongs.length) % viewerNavigableSongs.length;
-    setActiveViewerSongId(viewerNavigableSongs[prevIndex].id);
+    const prevSong = viewerNavigableSongs[prevIndex];
+    setActiveViewerSongId(prevSong.id);
     setCurrentViewerSongIndex(prevIndex);
     setViewerTransposeDelta(0);
+    setViewerEditedContent(prevSong.extractedChords); // Inicializar conteúdo editável
   };
 
   const getViewerContent = () => {
@@ -171,10 +178,8 @@ const ChordRecognizer = () => {
       return '';
     }
 
-    const currentSong = viewerNavigableSongs.find(s => s.id === activeViewerSongId);
-    if (!currentSong) return '';
-
-    let contentToDisplay = currentSong.extractedChords;
+    // O conteúdo base para exibição é o que está sendo editado
+    let contentToDisplay = viewerEditedContent;
 
     if (contentToDisplay) {
       let lines = contentToDisplay.split('\n');
@@ -237,9 +242,11 @@ const ChordRecognizer = () => {
     if (repertoireSongs.length > 0) {
       setActiveViewerSongId(repertoireSongs[0].id);
       setCurrentViewerSongIndex(0);
+      setViewerEditedContent(repertoireSongs[0].extractedChords); // Inicializar conteúdo editável
     } else {
       setActiveViewerSongId(null);
       setCurrentViewerSongIndex(0);
+      setViewerEditedContent(''); // Limpar se não houver músicas
     }
 
     setIsViewerOpen(true);
@@ -256,6 +263,7 @@ const ChordRecognizer = () => {
     setActiveViewerSongId(null);
     setShowSearchResults(false);
     setViewerFontSize(1.2); // Resetar zoom ao fechar
+    setViewerEditedContent(''); // Limpar conteúdo editável
   };
 
   const handleZoomIn = () => {
@@ -264,6 +272,23 @@ const ChordRecognizer = () => {
 
   const handleZoomOut = () => {
     setViewerFontSize(prev => Math.max(prev - 0.1, 0.8)); // Limite mínimo de zoom
+  };
+
+  const handleViewerContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newContent = e.target.value;
+    setViewerEditedContent(newContent);
+
+    if (activeViewerSongId) {
+      setSongs(prevSongs =>
+        prevSongs.map(song =>
+          song.id === activeViewerSongId
+            ? { ...song, extractedChords: newContent }
+            : song
+        )
+      );
+      // Não exibe toast a cada keystroke para evitar spam, mas a mudança é salva.
+      // Se quiser feedback visual, pode adicionar um pequeno indicador de "salvo".
+    }
   };
 
   return (
@@ -312,6 +337,7 @@ const ChordRecognizer = () => {
                   setActiveViewerSongId(null); 
                   setShowSearchResults(false);
                   setViewerFontSize(1.2); // Resetar zoom ao abrir
+                  setViewerEditedContent(''); // Limpar ao abrir
                 } else {
                   handleCloseViewer(); 
                 }
@@ -371,7 +397,13 @@ const ChordRecognizer = () => {
                   )}
                 </div>
                 <div className="flex-1 p-4 overflow-auto font-mono leading-relaxed">
-                  <pre className="whitespace-pre-wrap" style={{ fontSize: `${viewerFontSize}rem` }}>{getViewerContent()}</pre>
+                  <Textarea
+                    value={getViewerContent()}
+                    onChange={handleViewerContentChange}
+                    className="w-full h-full resize-none border-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
+                    style={{ fontSize: `${viewerFontSize}rem` }}
+                    disabled={!activeViewerSongId} // Desabilita edição se nenhuma música estiver selecionada
+                  />
                 </div>
                 <div className="flex justify-between p-4 border-t dark:border-gray-700">
                   <div className="flex gap-2">
