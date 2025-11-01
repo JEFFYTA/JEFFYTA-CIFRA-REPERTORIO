@@ -125,11 +125,8 @@ const ChordRecognizer = () => {
   useEffect(() => {
     if (isViewerOpen) {
       prepareViewerSongs(viewerSearchTerm, isRepertoireViewerActive);
-      if (!isRepertoireViewerActive) {
-        setActiveViewerSongId(null);
-        setCurrentViewerSongIndex(0);
-        setViewerEditedContent(''); // Limpar ao abrir sem repertório ativo
-      }
+      // REMOVIDO: O bloco de código que limpava viewerEditedContent indevidamente.
+      // A limpeza inicial e a definição do conteúdo agora são tratadas em onOpenChange e handleSelectViewerSong/handleOpenRepertoireViewer.
     }
   }, [viewerSearchTerm, isViewerOpen, isRepertoireViewerActive, prepareViewerSongs]);
 
