@@ -17,7 +17,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Trash2, Play } from 'lucide-react'; // Importar o ícone Play
 import { cn } from "@/lib/utils";
 import { Repertoire } from "@/types/repertoire";
 
@@ -32,6 +32,7 @@ interface MyRepertoiresPanelProps {
   handleCreateRepertoire: () => void;
   handleSelectRepertoire: (id: string | null) => void;
   handleDeleteRepertoire: (id: string) => void;
+  handleOpenRepertoireViewer: () => void; // Nova prop
 }
 
 const MyRepertoiresPanel: React.FC<MyRepertoiresPanelProps> = ({
@@ -45,6 +46,7 @@ const MyRepertoiresPanel: React.FC<MyRepertoiresPanelProps> = ({
   handleCreateRepertoire,
   handleSelectRepertoire,
   handleDeleteRepertoire,
+  handleOpenRepertoireViewer, // Usar a nova prop
 }) => {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -116,13 +118,22 @@ const MyRepertoiresPanel: React.FC<MyRepertoiresPanelProps> = ({
                   </div>
                 ))}
                 {selectedRepertoireId && (
-                  <Button
-                    onClick={() => handleSelectRepertoire(null)}
-                    variant="outline"
-                    className="w-full mt-4"
-                  >
-                    Desselecionar Repertório
-                  </Button>
+                  <>
+                    <Button
+                      onClick={() => handleSelectRepertoire(null)}
+                      variant="outline"
+                      className="w-full mt-4"
+                    >
+                      Desselecionar Repertório
+                    </Button>
+                    <Button
+                      onClick={handleOpenRepertoireViewer}
+                      disabled={!selectedRepertoireId || repertoires.find(r => r.id === selectedRepertoireId)?.songIds.length === 0}
+                      className="w-full mt-2 bg-purple-600 hover:bg-purple-700 text-white"
+                    >
+                      <Play className="mr-2 h-4 w-4" /> Abrir Repertório
+                    </Button>
+                  </>
                 )}
               </div>
             )}
