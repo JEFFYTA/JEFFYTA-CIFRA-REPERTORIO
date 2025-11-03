@@ -24,10 +24,12 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
     setLoadingRepertoires(true);
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) {
+      console.log("[useRepertoireManagement] No user session found, clearing repertoires.");
       setRepertoires([]);
       setLoadingRepertoires(false);
       return;
     }
+    console.log("[useRepertoireManagement] Fetching repertoires for user:", user.user.id);
 
     const { data, error } = await supabase
       .from('repertoires')
@@ -37,22 +39,22 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
 
     if (error) {
       toast.error("Erro ao carregar repertórios: " + error.message);
-      console.error("Erro ao carregar repertórios:", error);
+      console.error("[useRepertoireManagement] Erro ao carregar repertórios:", error);
     } else {
-      // Mapear song_ids do Supabase para songIds para o tipo do frontend
       const mappedRepertoires = (data || []).map(rep => ({
         ...rep,
-        songIds: rep.song_ids || [], // Garante que é um array, mesmo se for null/undefined
+        songIds: rep.song_ids || [],
       }));
       setRepertoires(mappedRepertoires);
+      console.log("[useRepertoireManagement] Repertoires fetched successfully:", mappedRepertoires);
     }
     setLoadingRepertoires(false);
   }, []);
 
   useEffect(() => {
     fetchRepertoires();
-    // Adicionar um listener para mudanças de autenticação para recarregar os repertórios
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("[useRepertoireManagement] Auth state change event:", event);
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
         fetchRepertoires();
       }
@@ -79,6 +81,7 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
       name: newRepertoireName.trim(),
       song_ids: [],
     };
+    console.log("[useRepertoireManagement] Attempting to create repertoire:", newRepData);
 
     const { data, error } = await supabase
       .from('repertoires')
@@ -87,9 +90,8 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
 
     if (error) {
       toast.error("Erro ao criar repertório: " + error.message);
-      console.error("Erro ao criar repertório:", error);
+      console.error("[useRepertoireManagement] Erro ao criar repertório:", error);
     } else if (data && data.length > 0) {
-      // Mapear o repertório recém-criado para o formato do frontend
       const createdRepertoire = {
         ...data[0],
         songIds: data[0].song_ids || [],
@@ -97,6 +99,7 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
       setRepertoires(prev => [...prev, createdRepertoire]);
       setNewRepertoireName('');
       toast.success(`Repertório "${createdRepertoire.name}" criado!`);
+      console.log("[useRepertoireManagement] Repertoire created successfully:", createdRepertoire);
     }
   };
 
@@ -105,8 +108,10 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
     if (id) {
       const selectedRep = repertoires.find(rep => rep.id === id);
       toast.info(`Repertório "${selectedRep?.name}" selecionado.`);
+      console.log("[useRepertoireManagement] Repertoire selected:", selectedRep?.name, "ID:", id);
     } else {
       toast.info("Nenhum repertório selecionado.");
+      console.log("[useRepertoireManagement] No repertoire selected.");
     }
   };
 
@@ -116,6 +121,7 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
       toast.error("Você precisa estar logado para excluir repertórios.");
       return;
     }
+    console.log("[useRepertoireManagement] Attempting to delete repertoire ID:", id, "for user:", user.user.id);
 
     const { error } = await supabase
       .from('repertoires')
@@ -125,34 +131,35 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
 
     if (error) {
       toast.error("Erro ao excluir repertório: " + error.message);
-      console.error("Erro ao excluir repertório:", error);
+      console.error("[useRepertoireManagement] Erro ao excluir repertório:", error);
     } else {
       setRepertoires(prev => prev.filter(rep => rep.id !== id));
       if (selectedRepertoireId === id) {
         setSelectedRepertoireId(null);
       }
       toast.success("Repertório excluído.");
+      console.log("[useRepertoireManagement] Repertoire deleted successfully:", id);
     }
   };
 
   const handleToggleSongInRepertoire = async (songId: string, isChecked: boolean) => {
-    console.log("handleToggleSongInRepertoire called:", { songId, isChecked, selectedRepertoireId });
+    console.log("[handleToggleSongInRepertoire] called:", { songId, isChecked, selectedRepertoireId });
     if (!selectedRepertoireId) {
       toast.error("Por favor, selecione um repertório primeiro.");
-      console.warn("No repertoire selected when trying to toggle song.");
+      console.warn("[handleToggleSongInRepertoire] No repertoire selected when trying to toggle song.");
       return;
     }
 
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) {
       toast.error("Você precisa estar logado para modificar repertórios.");
-      console.warn("User not logged in when trying to toggle song in repertoire.");
+      console.warn("[handleToggleSongInRepertoire] User not logged in when trying to toggle song in repertoire.");
       return;
     }
 
     const currentRepertoire = repertoires.find(rep => rep.id === selectedRepertoireId);
     if (!currentRepertoire) {
-      console.error("Selected repertoire not found in state:", selectedRepertoireId);
+      console.error("[handleToggleSongInRepertoire] Selected repertoire not found in state:", selectedRepertoireId);
       toast.error("Repertório selecionado não encontrado.");
       return;
     }
@@ -161,7 +168,8 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
       ? [...new Set([...currentRepertoire.songIds, songId])]
       : currentRepertoire.songIds.filter(id => id !== songId);
 
-    console.log("Attempting to update repertoire with new song IDs:", newSongIds);
+    console.log("[handleToggleSongInRepertoire] Current repertoire songIds:", currentRepertoire.songIds);
+    console.log("[handleToggleSongInRepertoire] New song IDs to update:", newSongIds);
 
     const { error } = await supabase
       .from('repertoires')
@@ -171,7 +179,7 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
 
     if (error) {
       toast.error("Erro ao atualizar repertório: " + error.message);
-      console.error("Erro ao atualizar repertório no Supabase:", error);
+      console.error("[handleToggleSongInRepertoire] Erro ao atualizar repertório no Supabase:", error);
     } else {
       setRepertoires(prev => prev.map(rep => {
         if (rep.id === selectedRepertoireId) {
@@ -187,7 +195,7 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
       } else {
         toast.info(`"${songTitle}" removida do repertório "${repertoireName}".`);
       }
-      console.log("Repertoire updated successfully in Supabase and local state.");
+      console.log("[handleToggleSongInRepertoire] Repertoire updated successfully in Supabase and local state. New songIds:", newSongIds);
     }
   };
 
