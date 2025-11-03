@@ -18,6 +18,7 @@ import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { transposeChordLine } from "@/lib/chordUtils";
 
 const ChordRecognizer = () => {
+  // Mantendo os hooks e estados, mas o retorno será simplificado para depuração
   const [isViewerOpen, setIsViewerOpen] = useState<boolean>(false);
   const [isSongsPanelOpen, setIsSongsPanelOpen] = useState<boolean>(false);
   const [isRepertoiresPanelOpen, setIsRepertoiresPanelOpen] = useState<boolean>(false);
@@ -206,121 +207,10 @@ const ChordRecognizer = () => {
     ? viewerNavigableSongs.find(s => s.id === activeViewerSongId)
     : null;
 
-  if (!session) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
-        <Card className="w-full max-w-md p-8 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl text-center">Faça login para usar o Reconhecedor de Cifras</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Auth
-              supabaseClient={supabase}
-              providers={[]}
-              appearance={{
-                theme: ThemeSupa,
-                variables: {
-                  default: {
-                    colors: {
-                      brand: 'hsl(var(--primary))',
-                      brandAccent: 'hsl(217.2 91.2% 59.8%)',
-                    },
-                  },
-                },
-              }}
-              theme="light"
-              initialView="sign_in" // Adicionado para iniciar sempre na tela de login
-            />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
+  // Retorno simplificado para depuração
   return (
-    <div className="flex-1 flex flex-col lg:flex-row gap-6 p-4 bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
-      <ChordRecognizerCore
-        inputText={inputText}
-        onInputTextChange={setInputText}
-        outputText={outputText}
-        onTranspose={handleTranspose}
-        onRestore={handleRestore}
-        onClear={handleClear}
-        onCopyToClipboard={handleCopyToClipboard}
-        onOpenFullScreenViewer={handleOpenFullScreenViewer}
-        onSignOut={() => supabase.auth.signOut()}
-      />
-
-      <div className="w-full lg:w-auto flex lg:flex-col gap-4 justify-center lg:justify-start">
-        <Button onClick={() => setIsSongsPanelOpen(true)} className="w-full lg:w-auto" disabled={loadingSongs}>
-          {loadingSongs ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Music className="mr-2 h-4 w-4" />} Minhas Músicas
-        </Button>
-        <Button onClick={() => setIsRepertoiresPanelOpen(true)} className="w-full lg:w-auto" disabled={loadingRepertoires}>
-          {loadingRepertoires ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ListMusic className="mr-2 h-4 w-4" />} Meus Repertórios
-        </Button>
-      </div>
-
-      <MySongsPanel
-        open={isSongsPanelOpen}
-        onOpenChange={setIsSongsPanelOpen}
-        songs={songs}
-        currentSongIndex={currentSongIndex}
-        newSongTitle={newSongTitle}
-        setNewSongTitle={setNewSongTitle}
-        handleSaveSong={handleSaveSong}
-        handleLoadSong={handleLoadSong}
-        handleDeleteSong={handleDeleteSong}
-        selectedRepertoireId={selectedRepertoireId}
-        selectedRepertoire={selectedRepertoire}
-        handleToggleSongInRepertoire={handleToggleSongInRepertoire}
-      />
-
-      <MyRepertoiresPanel
-        open={isRepertoiresPanelOpen}
-        onOpenChange={setIsRepertoiresPanelOpen}
-        repertoires={repertoires}
-        selectedRepertoireId={selectedRepertoireId}
-        setSelectedRepertoireId={setSelectedRepertoireId}
-        newRepertoireName={newRepertoireName}
-        setNewRepertoireName={setNewRepertoireName}
-        handleCreateRepertoire={handleCreateRepertoire}
-        handleSelectRepertoire={handleSelectRepertoire}
-        handleDeleteRepertoire={handleDeleteRepertoire}
-        handleOpenRepertoireViewer={handleOpenRepertoireViewer}
-      />
-
-      <ChordViewer
-        open={isViewerOpen}
-        onOpenChange={setIsViewerOpen}
-        currentSong={currentViewerSong}
-        viewerNavigableSongs={viewerNavigableSongs}
-        currentViewerSongIndex={currentViewerSongIndex}
-        onNextSong={handleNextViewerSong}
-        onPreviousSong={handlePreviousViewerSong}
-        onSearchTermChange={setViewerSearchTerm}
-        searchTerm={viewerSearchTerm}
-        searchResults={viewerNavigableSongs.filter(song =>
-          song.title.toLowerCase().startsWith(viewerSearchTerm.toLowerCase())
-        )}
-        onSelectViewerSong={handleSelectViewerSong}
-        isRepertoireViewerActive={isRepertoireViewerActive}
-        selectedRepertoireName={selectedRepertoire?.name || null}
-        onContentChange={(newContent) => {
-          if (currentViewerSong) {
-            // Update the content in the local state for immediate display
-            const updatedSongs = viewerNavigableSongs.map(s =>
-              s.id === currentViewerSong.id ? { ...s, extractedChords: newContent } : s
-            );
-            setViewerNavigableSongs(updatedSongs);
-            // Also update the main songs list
-            setSongs(prevSongs => prevSongs.map(s =>
-              s.id === currentViewerSong.id ? { ...s, extractedChords: newContent } : s
-            ));
-            handleUpdateSongChords(currentViewerSong.id, newContent);
-          }
-        }}
-        onSaveTransposition={handleUpdateSongChords}
-      />
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
+      <h1 className="text-4xl font-bold">Olá Mundo! Preview Teste.</h1>
     </div>
   );
 };
