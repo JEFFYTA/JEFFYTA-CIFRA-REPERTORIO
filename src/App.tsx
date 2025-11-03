@@ -1,20 +1,9 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import ChordRecognizer from "./pages/ChordRecognizer";
-import NotFound from "./pages/NotFound";
-import { Toaster } from "@/components/ui/sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { SessionContextProvider } from '@supabase/auth-ui-react'; // Importando SessionContextProvider
+import React from "react";
 
 const App = () => (
-  <SessionContextProvider supabaseClient={supabase}> {/* Envolvendo o Router com SessionContextProvider */}
-    <Router>
-      <Routes>
-        <Route path="/" element={<ChordRecognizer />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <Toaster />
-    </Router>
-  </SessionContextProvider>
+  <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
+    <h1 className="text-4xl font-bold">App Simples Funcionando!</h1>
+  </div>
 );
 
 export default App;
