@@ -1,9 +1,19 @@
-import React from "react";
+"use client";
 
-const App = () => (
-  <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
-    <h1 className="text-4xl font-bold">App Simples Funcionando!</h1>
-  </div>
-);
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import ChordRecognizer from "./pages/ChordRecognizer";
+import NotFound from "./pages/NotFound";
+
+const App = () => {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<ChordRecognizer />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Router>
+  );
+};
 
 export default App;
