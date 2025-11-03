@@ -63,8 +63,8 @@ const ChordRecognizer = () => {
     handleUpdateSongChords,
     loadingSongs,
   } = useSongManagement({
-    initialInputText: '',
-    onInputTextChange: setInputText // Pass setInputText directly
+    initialInputText: ''
+    // onInputTextChange: setInputText // Removido
   });
 
   const {

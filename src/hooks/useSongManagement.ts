@@ -7,11 +7,10 @@ import { supabase } from "@/integrations/supabase/client"; // Importar o cliente
 import { Song } from "@/types/song"; // Importar o tipo Song
 
 interface UseSongManagementProps {
-  initialInputText: string;
-  onInputTextChange: (text: string) => void;
+  initialInputText?: string; // Tornar opcional
 }
 
-export const useSongManagement = ({ initialInputText, onInputTextChange }: UseSongManagementProps) => {
+export const useSongManagement = ({ initialInputText = '' }: UseSongManagementProps = {}) => {
   const [inputText, setInputText] = useState<string>(initialInputText);
   const [outputText, setOutputText] = useState<string>('');
   const [originalOutputText, setOriginalOutputText] = useState<string>('');
@@ -80,8 +79,8 @@ export const useSongManagement = ({ initialInputText, onInputTextChange }: UseSo
     } else {
       setNewSongTitle('');
     }
-    onInputTextChange(inputText);
-  }, [inputText, processInput, onInputTextChange]);
+    // onInputTextChange(inputText); // Removido
+  }, [inputText, processInput]); // Removido onInputTextChange da dependência
 
   const handleClear = () => {
     setInputText('');
