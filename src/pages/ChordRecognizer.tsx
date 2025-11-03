@@ -10,11 +10,10 @@ import MySongsPanel from "@/components/MySongsPanel";
 import MyRepertoiresPanel from "@/components/MyRepertoiresPanel";
 import ChordRecognizerCore from "@/components/ChordRecognizerCore";
 import ChordViewer from "@/components/ChordViewer";
+import CustomLoginForm from "@/components/CustomLoginForm"; // Importar o novo componente
 import { useSongManagement } from "@/hooks/useSongManagement";
 import { useRepertoireManagement } from "@/hooks/useRepertoireManagement";
 import { supabase } from "@/integrations/supabase/client";
-import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { transposeChordLine } from "@/lib/chordUtils";
 
 const ChordRecognizer = () => {
@@ -30,10 +29,13 @@ const ChordRecognizer = () => {
 
   const [session, setSession] = useState<any>(null);
 
+  const getSession = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    setSession(session);
+  }, []);
+
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
+    getSession();
 
     const {
       data: { subscription },
@@ -42,7 +44,7 @@ const ChordRecognizer = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [getSession]);
 
   const {
     inputText,
@@ -64,7 +66,6 @@ const ChordRecognizer = () => {
     loadingSongs,
   } = useSongManagement({
     initialInputText: ''
-    // onInputTextChange: setInputText // Removido
   });
 
   const {
@@ -221,62 +222,7 @@ const ChordRecognizer = () => {
   if (!session) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-        <Card className="w-full max-w-md p-6 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-3xl font-bold text-center mb-6">Bem-vindo ao Cifra Fácil!</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Auth
-              supabaseClient={supabase}
-              providers={[]}
-              appearance={{
-                theme: ThemeSupa,
-                variables: {
-                  default: {
-                    colors: {
-                      brand: 'hsl(240 5.9% 10%)', // primary
-                      brandAccent: 'hsl(240 5.3% 26.1%)', // foreground
-                    },
-                  },
-                },
-              }}
-              theme="light"
-              localization={{
-                variables: {
-                  sign_in: {
-                    email_label: 'Seu e-mail',
-                    password_label: 'Sua senha',
-                    email_input_placeholder: 'email@exemplo.com',
-                    password_input_placeholder: '••••••••',
-                    button_label: 'Entrar',
-                    social_provider_text: 'Entrar com {{provider}}',
-                    link_text: 'Já tem uma conta? Entrar',
-                  },
-                  sign_up: {
-                    email_label: 'Seu e-mail',
-                    password_label: 'Crie uma senha',
-                    email_input_placeholder: 'email@exemplo.com',
-                    password_input_placeholder: '••••••••',
-                    button_label: 'Registrar',
-                    social_provider_text: 'Registrar com {{provider}}',
-                    link_text: 'Não tem uma conta? Registrar',
-                  },
-                  forgotten_password: {
-                    email_label: 'Seu e-mail',
-                    email_input_placeholder: 'email@exemplo.com',
-                    button_label: 'Enviar instruções de redefinição',
-                    link_text: 'Esqueceu sua senha?',
-                  },
-                  update_password: {
-                    password_label: 'Nova senha',
-                    password_input_placeholder: '••••••••',
-                    button_label: 'Atualizar senha',
-                  },
-                },
-              }}
-            />
-          </CardContent>
-        </Card>
+        <CustomLoginForm onSignIn={getSession} /> {/* Usando o novo componente */}
       </div>
     );
   }
