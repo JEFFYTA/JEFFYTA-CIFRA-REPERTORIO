@@ -18,7 +18,6 @@ import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { transposeChordLine } from "@/lib/chordUtils";
 
 const ChordRecognizer = () => {
-  // Mantendo os hooks e estados, mas o retorno será simplificado para depuração
   const [isViewerOpen, setIsViewerOpen] = useState<boolean>(false);
   const [isSongsPanelOpen, setIsSongsPanelOpen] = useState<boolean>(false);
   const [isRepertoiresPanelOpen, setIsRepertoiresPanelOpen] = useState<boolean>(false);
@@ -65,7 +64,7 @@ const ChordRecognizer = () => {
     loadingSongs,
   } = useSongManagement({
     initialInputText: '',
-    onInputTextChange: (text) => { /* No-op, handled internally by hook */ }
+    onInputTextChange: setInputText // Pass setInputText directly
   });
 
   const {
@@ -207,10 +206,167 @@ const ChordRecognizer = () => {
     ? viewerNavigableSongs.find(s => s.id === activeViewerSongId)
     : null;
 
-  // Retorno simplificado para depuração
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("Erro ao sair: " + error.message);
+      console.error("Erro ao sair:", error);
+    } else {
+      toast.success("Você foi desconectado.");
+      setSession(null); // Clear session state
+      handleClear(); // Clear local song data
+    }
+  };
+
+  if (!session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
+        <Card className="w-full max-w-md p-6 shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-3xl font-bold text-center mb-6">Bem-vindo ao Cifra Fácil!</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Auth
+              supabaseClient={supabase}
+              providers={[]}
+              appearance={{
+                theme: ThemeSupa,
+                variables: {
+                  default: {
+                    colors: {
+                      brand: 'hsl(240 5.9% 10%)', // primary
+                      brandAccent: 'hsl(240 5.3% 26.1%)', // foreground
+                    },
+                  },
+                },
+              }}
+              theme="light"
+              localization={{
+                variables: {
+                  sign_in: {
+                    email_label: 'Seu e-mail',
+                    password_label: 'Sua senha',
+                    email_input_placeholder: 'email@exemplo.com',
+                    password_input_placeholder: '••••••••',
+                    button_label: 'Entrar',
+                    social_provider_text: 'Entrar com {{provider}}',
+                    link_text: 'Já tem uma conta? Entrar',
+                  },
+                  sign_up: {
+                    email_label: 'Seu e-mail',
+                    password_label: 'Crie uma senha',
+                    email_input_placeholder: 'email@exemplo.com',
+                    password_input_placeholder: '••••••••',
+                    button_label: 'Registrar',
+                    social_provider_text: 'Registrar com {{provider}}',
+                    link_text: 'Não tem uma conta? Registrar',
+                  },
+                  forgotten_password: {
+                    email_label: 'Seu e-mail',
+                    email_input_placeholder: 'email@exemplo.com',
+                    button_label: 'Enviar instruções de redefinição',
+                    link_text: 'Esqueceu sua senha?',
+                  },
+                  update_password: {
+                    password_label: 'Nova senha',
+                    password_input_placeholder: '••••••••',
+                    button_label: 'Atualizar senha',
+                  },
+                },
+              }}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
-      <h1 className="text-4xl font-bold">Olá Mundo! Preview Teste.</h1>
+    <div className="min-h-screen flex flex-col lg:flex-row bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
+      <div className="flex-1 flex flex-col p-4 space-y-4 lg:space-y-0 lg:space-x-4 lg:flex-row">
+        <ChordRecognizerCore
+          inputText={inputText}
+          onInputTextChange={setInputText}
+          outputText={outputText}
+          onTranspose={handleTranspose}
+          onRestore={handleRestore}
+          onClear={handleClear}
+          onCopyToClipboard={handleCopyToClipboard}
+          onOpenFullScreenViewer={handleOpenFullScreenViewer}
+          onSignOut={handleSignOut}
+        />
+      </div>
+
+      <div className="fixed bottom-4 right-4 flex flex-col gap-2 z-50">
+        <Button
+          onClick={() => setIsSongsPanelOpen(true)}
+          className="w-14 h-14 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center"
+          title="Minhas Músicas"
+        >
+          {loadingSongs ? <Loader2 className="h-6 w-6 animate-spin" /> : <Music className="h-6 w-6" />}
+        </Button>
+        <Button
+          onClick={() => setIsRepertoiresPanelOpen(true)}
+          className="w-14 h-14 rounded-full shadow-lg bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center"
+          title="Meus Repertórios"
+        >
+          {loadingRepertoires ? <Loader2 className="h-6 w-6 animate-spin" /> : <ListMusic className="h-6 w-6" />}
+        </Button>
+      </div>
+
+      <MySongsPanel
+        open={isSongsPanelOpen}
+        onOpenChange={setIsSongsPanelOpen}
+        songs={songs}
+        currentSongIndex={currentSongIndex}
+        newSongTitle={newSongTitle}
+        setNewSongTitle={setNewSongTitle}
+        handleSaveSong={handleSaveSong}
+        handleLoadSong={handleLoadSong}
+        handleDeleteSong={handleDeleteSong}
+        selectedRepertoireId={selectedRepertoireId}
+        selectedRepertoire={selectedRepertoire}
+        handleToggleSongInRepertoire={handleToggleSongInRepertoire}
+      />
+
+      <MyRepertoiresPanel
+        open={isRepertoiresPanelOpen}
+        onOpenChange={setIsRepertoiresPanelOpen}
+        repertoires={repertoires}
+        selectedRepertoireId={selectedRepertoireId}
+        setSelectedRepertoireId={handleSelectRepertoire}
+        newRepertoireName={newRepertoireName}
+        setNewRepertoireName={setNewRepertoireName}
+        handleCreateRepertoire={handleCreateRepertoire}
+        handleSelectRepertoire={handleSelectRepertoire}
+        handleDeleteRepertoire={handleDeleteRepertoire}
+        handleOpenRepertoireViewer={handleOpenRepertoireViewer}
+      />
+
+      <ChordViewer
+        open={isViewerOpen}
+        onOpenChange={setIsViewerOpen}
+        currentSong={currentViewerSong}
+        viewerNavigableSongs={viewerNavigableSongs}
+        currentViewerSongIndex={currentViewerSongIndex}
+        onNextSong={handleNextViewerSong}
+        onPreviousSong={handlePreviousViewerSong}
+        onSearchTermChange={setViewerSearchTerm}
+        searchTerm={viewerSearchTerm}
+        searchResults={viewerNavigableSongs.filter(s => s.id !== activeViewerSongId)} // Exclude current song from search results
+        onSelectViewerSong={handleSelectViewerSong}
+        isRepertoireViewerActive={isRepertoireViewerActive}
+        selectedRepertoireName={selectedRepertoire?.name || null}
+        onContentChange={(newContent) => {
+          if (currentViewerSong) {
+            handleUpdateSongChords(currentViewerSong.id, newContent);
+          }
+        }}
+        onSaveTransposition={(songId, newContent) => {
+          handleUpdateSongChords(songId, newContent);
+          toast.success("Transposição salva com sucesso!");
+        }}
+      />
     </div>
   );
 };
