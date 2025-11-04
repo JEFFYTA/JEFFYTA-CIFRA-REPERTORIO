@@ -142,19 +142,14 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
     setShowSearchResults(true);
   };
 
-  // Calculate the approximate width of the left control group for balancing
-  // Search input (w-48) + 2 buttons (p-2 ~ 32px each) + 2 gaps (gap-2 ~ 8px each)
-  // 192px + 32px + 32px + 16px = 272px
-  const leftControlGroupWidth = "w-[272px]";
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-full h-[90vh] flex flex-col p-0 sm:max-w-[90vw]">
-        <DialogHeader className="p-4 border-b dark:border-gray-700 flex items-center justify-between relative">
-          {/* Left side: Search input, Dropdown, Close button */}
-          <div className={cn("flex items-center gap-2 relative z-40", leftControlGroupWidth)}>
-            {!isRepertoireViewerActive ? (
-              <div className="relative flex-1"> {/* flex-1 to take available space within leftControlGroupWidth */}
+        <DialogHeader className="p-4 border-b dark:border-gray-700 grid grid-cols-[auto_1fr_auto] items-center gap-2">
+          {/* Left side: Search input (conditional), Dropdown, Close button */}
+          <div className="flex items-center gap-2 relative z-40">
+            {!isRepertoireViewerActive && (
+              <div className="relative w-48"> {/* Fixed width for search input */}
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400 z-10" />
                 <Input
                   placeholder="Buscar..."
@@ -192,8 +187,6 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
                   </ScrollArea>
                 )}
               </div>
-            ) : (
-              <div className="flex-1"></div> // Placeholder to maintain flex-1 space if search is hidden
             )}
 
             {/* Dropdown Menu for other actions */}
@@ -203,7 +196,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
                   <EllipsisVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start"> {/* Align to start so it opens to the right */}
+              <DropdownMenuContent align="start">
                 <DropdownMenuItem onClick={handleToggleEdit} disabled={!currentSong}>
                   <Edit className="mr-2 h-4 w-4" /> {isEditing ? 'Cancelar Edição' : 'Editar'}
                 </DropdownMenuItem>
@@ -241,13 +234,13 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
             </DialogClose>
           </div>
 
-          {/* Center: Title (absolutely positioned) */}
-          <DialogTitle className="text-xl text-center flex-1 min-w-0 truncate absolute left-1/2 -translate-x-1/2">
+          {/* Center: Title */}
+          <DialogTitle className="text-xl text-center min-w-0 truncate">
             {getViewerTitle()}
           </DialogTitle>
 
           {/* Right side: Empty placeholder to balance the left side. */}
-          <div className={leftControlGroupWidth}></div> {/* Fixed width to match left side for perfect balance */}
+          <div></div>
         </DialogHeader>
 
         <div className="flex-1 p-4 overflow-auto font-mono leading-relaxed">
