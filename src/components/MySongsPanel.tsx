@@ -16,10 +16,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet"; // Adicionado SheetClose
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Save, Trash2, Search } from 'lucide-react';
+import { Save, Trash2, Search, X } from 'lucide-react'; // Adicionado X para o botão de fechar
 import { cn } from "@/lib/utils";
 import { Repertoire } from "@/types/repertoire";
 import { Song } from "@/types/song"; // Importar o tipo Song
@@ -55,9 +55,6 @@ const MySongsPanel: React.FC<MySongsPanelProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
 
-  // Adicionando logs para depuração
-  console.log("[MySongsPanel] Props received: selectedRepertoireId:", selectedRepertoireId, "selectedRepertoire:", selectedRepertoire);
-
   const filteredSongs = songs.filter(song =>
     song.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -65,13 +62,13 @@ const MySongsPanel: React.FC<MySongsPanelProps> = ({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md flex flex-col">
-        <SheetHeader>
-          <SheetTitle className="text-2xl text-center">Minhas Músicas</SheetTitle>
-          {selectedRepertoire && (
-            <p className="text-center text-sm text-purple-600 dark:text-purple-400 font-medium">
-              Repertório selecionado: {selectedRepertoire.name}
-            </p>
-          )}
+        <SheetHeader className="flex flex-row items-center justify-between p-4 border-b dark:border-gray-700"> {/* Adicionado flex para alinhar título e close */}
+          <SheetTitle className="text-2xl text-center flex-1">Minhas Músicas</SheetTitle>
+          <SheetClose asChild>
+            <Button variant="ghost" size="sm" className="p-2"> {/* Botão de fechar menor */}
+              <X className="h-4 w-4" />
+            </Button>
+          </SheetClose>
         </SheetHeader>
         <div className="flex flex-col flex-1 p-4">
           <div className="flex gap-2 mb-4">
@@ -105,7 +102,6 @@ const MySongsPanel: React.FC<MySongsPanelProps> = ({
               <div className="space-y-2">
                 {filteredSongs.map((song, index) => {
                   const isInRepertoire = selectedRepertoire?.songIds.includes(song.id);
-                  console.log(`[MySongsPanel] Song ID: ${song.id} - Is in selected repertoire: ${isInRepertoire}`);
                   return (
                     <div
                       key={song.id}
