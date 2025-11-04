@@ -136,43 +136,50 @@ const ChordRecognizer = () => {
     if (isViewerOpen) {
       const filteredSongs = prepareViewerSongs(viewerSearchTerm, isRepertoireViewerActive);
       setViewerNavigableSongs(filteredSongs);
+      console.log("Viewer: useEffect (update viewerNavigableSongs) - viewerNavigableSongs set to:", filteredSongs);
     }
   }, [viewerSearchTerm, isViewerOpen, isRepertoireViewerActive, prepareViewerSongs]);
 
   // NOVO useEffect para sincronizar a música ativa e o índice
   useEffect(() => {
+    console.log("Viewer: useEffect (sync activeViewerSongId) triggered. isViewerOpen:", isViewerOpen, "viewerNavigableSongs.length:", viewerNavigableSongs.length, "activeViewerSongId (before):", activeViewerSongId);
     if (isViewerOpen && viewerNavigableSongs.length > 0) {
       const currentActiveSongIndexInNewList = viewerNavigableSongs.findIndex(s => s.id === activeViewerSongId);
 
       if (currentActiveSongIndexInNewList !== -1) {
         // Se a música ativa anterior ainda estiver na nova lista, mantenha-a ativa e atualize seu índice
         setCurrentViewerSongIndex(currentActiveSongIndexInNewList);
+        console.log("Viewer: Active song found in new list. activeViewerSongId:", activeViewerSongId, "currentViewerSongIndex:", currentActiveSongIndexInNewList);
       } else {
         // Caso contrário, defina a primeira música da nova lista como ativa
         setActiveViewerSongId(viewerNavigableSongs[0].id);
         setCurrentViewerSongIndex(0);
+        console.log("Viewer: Active song NOT found, setting to first song. activeViewerSongId:", viewerNavigableSongs[0].id, "currentViewerSongIndex: 0");
       }
     } else if (isViewerOpen && viewerNavigableSongs.length === 0) {
       // Se o visualizador estiver aberto, mas não houver músicas navegáveis, limpe a música ativa
       setActiveViewerSongId(null);
       setCurrentViewerSongIndex(0);
+      console.log("Viewer: open but no navigable songs. activeViewerSongId: null, currentViewerSongIndex: 0");
     } else if (!isViewerOpen) {
       // Quando o visualizador fecha, redefina a música ativa e o índice
       setActiveViewerSongId(null);
       setCurrentViewerSongIndex(0);
+      console.log("Viewer: closed. activeViewerSongId: null, currentViewerSongIndex: 0");
     }
   }, [viewerNavigableSongs, isViewerOpen]);
 
 
   const handleOpenFullScreenViewer = () => {
+    console.log("Viewer: handleOpenFullScreenViewer called.");
     setIsRepertoireViewerActive(false);
     setViewerSearchTerm('');
 
     const allSongsSorted = [...songs].sort((a, b) => a.title.localeCompare(b.title));
-    setViewerNavigableSongs(allSongsSorted);
-
+    setViewerNavigableSongs(allSongsSorted); // Define a lista de músicas navegáveis
+    
     if (allSongsSorted.length > 0) {
-      setActiveViewerSongId(allSongsSorted[0].id);
+      setActiveViewerSongId(allSongsSorted[0].id); // Define a primeira música como ativa
       setCurrentViewerSongIndex(0);
     } else {
       setActiveViewerSongId(null);
@@ -182,13 +189,16 @@ const ChordRecognizer = () => {
   };
 
   const handleOpenRepertoireViewer = () => {
+    console.log("Viewer: handleOpenRepertoireViewer called.");
     if (!selectedRepertoireId) {
       toast.error("Nenhum repertório selecionado.");
+      console.log("Viewer: No repertoire selected.");
       return;
     }
     const rep = repertoires.find(r => r.id === selectedRepertoireId);
     if (!rep || rep.songIds.length === 0) {
       toast.error("O repertório selecionado não possui músicas.");
+      console.log("Viewer: Selected repertoire has no songs or not found.");
       return;
     }
 
@@ -200,10 +210,10 @@ const ChordRecognizer = () => {
       .filter((s): s is Song => s !== undefined)
       .sort((a, b) => a.title.localeCompare(b.title)); // Garante ordem consistente
 
-    setViewerNavigableSongs(repertoireSongs);
+    setViewerNavigableSongs(repertoireSongs); // Define a lista de músicas navegáveis
 
     if (repertoireSongs.length > 0) {
-      setActiveViewerSongId(repertoireSongs[0].id);
+      setActiveViewerSongId(repertoireSongs[0].id); // Define a primeira música do repertório como ativa
       setCurrentViewerSongIndex(0);
     } else {
       setActiveViewerSongId(null);
@@ -215,6 +225,7 @@ const ChordRecognizer = () => {
   };
 
   const handleSelectViewerSong = (songId: string) => {
+    console.log("Viewer: handleSelectViewerSong called with ID:", songId);
     setActiveViewerSongId(songId);
     const index = viewerNavigableSongs.findIndex(s => s.id === songId);
     if (index !== -1) {
@@ -223,19 +234,23 @@ const ChordRecognizer = () => {
   };
 
   const handleNextViewerSong = () => {
+    console.log("Viewer: handleNextViewerSong called. activeViewerSongId:", activeViewerSongId, "currentViewerSongIndex:", currentViewerSongIndex, "viewerNavigableSongs.length:", viewerNavigableSongs.length);
     if (!activeViewerSongId || viewerNavigableSongs.length === 0) return;
     const nextIndex = (currentViewerSongIndex + 1) % viewerNavigableSongs.length;
     const nextSong = viewerNavigableSongs[nextIndex];
     setActiveViewerSongId(nextSong.id);
     setCurrentViewerSongIndex(nextIndex);
+    console.log("Viewer: Next song set to ID:", nextSong.id, "Index:", nextIndex);
   };
 
   const handlePreviousViewerSong = () => {
+    console.log("Viewer: handlePreviousViewerSong called. activeViewerSongId:", activeViewerSongId, "currentViewerSongIndex:", currentViewerSongIndex, "viewerNavigableSongs.length:", viewerNavigableSongs.length);
     if (!activeViewerSongId || viewerNavigableSongs.length === 0) return;
     const prevIndex = (currentViewerSongIndex - 1 + viewerNavigableSongs.length) % viewerNavigableSongs.length;
     const prevSong = viewerNavigableSongs[prevIndex];
     setActiveViewerSongId(prevSong.id);
     setCurrentViewerSongIndex(prevIndex);
+    console.log("Viewer: Previous song set to ID:", prevSong.id, "Index:", prevIndex);
   };
 
   const currentViewerSong = activeViewerSongId
