@@ -114,10 +114,21 @@ const ChordRecognizer = () => {
   const prepareViewerSongs = useCallback((search: string, isRepertoireMode: boolean) => {
     let baseSongsList: Song[] = [];
     if (isRepertoireMode && selectedRepertoire) {
+      console.log("Viewer: prepareViewerSongs - Repertoire Mode Active.");
+      console.log("Viewer: prepareViewerSongs - selectedRepertoire:", selectedRepertoire);
+      console.log("Viewer: prepareViewerSongs - selectedRepertoire.songIds:", selectedRepertoire.songIds);
+      console.log("Viewer: prepareViewerSongs - Current 'songs' state (IDs and Titles):", songs.map(s => ({ id: s.id, title: s.title })));
+
       baseSongsList = selectedRepertoire.songIds
-        .map(id => songs.find(s => s.id === id))
+        .map(id => {
+          const foundSong = songs.find(s => s.id === id);
+          console.log(`Viewer: prepareViewerSongs - Looking for song ID ${id}, found: ${foundSong ? foundSong.title : 'NOT FOUND'}`);
+          return foundSong;
+        })
         .filter((s): s is Song => s !== undefined);
+      console.log("Viewer: prepareViewerSongs - baseSongsList (after map and filter):", baseSongsList.map(s => ({ id: s.id, title: s.title })));
     } else {
+      console.log("Viewer: prepareViewerSongs - All Songs Mode Active.");
       baseSongsList = songs;
     }
 
@@ -128,7 +139,8 @@ const ChordRecognizer = () => {
     );
 
     filtered.sort((a, b) => a.title.localeCompare(b.title));
-    return filtered; // Retorna a lista filtrada
+    console.log("Viewer: prepareViewerSongs - Final filtered and sorted songs:", filtered.map(s => ({ id: s.id, title: s.title })));
+    return filtered;
   }, [songs, selectedRepertoire]);
 
   // Este useEffect é responsável por atualizar a lista de músicas navegáveis
@@ -167,8 +179,7 @@ const ChordRecognizer = () => {
       setCurrentViewerSongIndex(0);
       console.log("Viewer: closed. activeViewerSongId: null, currentViewerSongIndex: 0");
     }
-  }, [viewerNavigableSongs, isViewerOpen]);
-
+  }, [viewerNavigableSongs, isViewerOpen, activeViewerSongId]); // Adicionado activeViewerSongId como dependência
 
   const handleOpenFullScreenViewer = () => {
     console.log("Viewer: handleOpenFullScreenViewer called.");
