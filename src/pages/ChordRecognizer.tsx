@@ -128,13 +128,14 @@ const ChordRecognizer = () => {
     );
 
     filtered.sort((a, b) => a.title.localeCompare(b.title));
-    setViewerNavigableSongs(filtered);
+    return filtered; // Retorna a lista filtrada
   }, [songs, selectedRepertoire]);
 
   // Este useEffect é responsável por atualizar a lista de músicas navegáveis
   useEffect(() => {
     if (isViewerOpen) {
-      prepareViewerSongs(viewerSearchTerm, isRepertoireViewerActive);
+      const filteredSongs = prepareViewerSongs(viewerSearchTerm, isRepertoireViewerActive);
+      setViewerNavigableSongs(filteredSongs);
     }
   }, [viewerSearchTerm, isViewerOpen, isRepertoireViewerActive, prepareViewerSongs]);
 
@@ -166,7 +167,17 @@ const ChordRecognizer = () => {
   const handleOpenFullScreenViewer = () => {
     setIsRepertoireViewerActive(false);
     setViewerSearchTerm('');
-    // O useEffect acima cuidará de definir activeViewerSongId e currentViewerSongIndex
+
+    const allSongsSorted = [...songs].sort((a, b) => a.title.localeCompare(b.title));
+    setViewerNavigableSongs(allSongsSorted);
+
+    if (allSongsSorted.length > 0) {
+      setActiveViewerSongId(allSongsSorted[0].id);
+      setCurrentViewerSongIndex(0);
+    } else {
+      setActiveViewerSongId(null);
+      setCurrentViewerSongIndex(0);
+    }
     setIsViewerOpen(true);
   };
 
@@ -183,7 +194,22 @@ const ChordRecognizer = () => {
 
     setIsRepertoireViewerActive(true);
     setViewerSearchTerm(''); // Limpa a busca para a visualização do repertório
-    // O useEffect acima cuidará de definir activeViewerSongId e currentViewerSongIndex
+
+    const repertoireSongs = rep.songIds
+      .map(id => songs.find(s => s.id === id))
+      .filter((s): s is Song => s !== undefined)
+      .sort((a, b) => a.title.localeCompare(b.title)); // Garante ordem consistente
+
+    setViewerNavigableSongs(repertoireSongs);
+
+    if (repertoireSongs.length > 0) {
+      setActiveViewerSongId(repertoireSongs[0].id);
+      setCurrentViewerSongIndex(0);
+    } else {
+      setActiveViewerSongId(null);
+      setCurrentViewerSongIndex(0);
+    }
+
     setIsViewerOpen(true);
     toast.info(`Abrindo repertório "${rep.name}" em tela cheia.`);
   };
