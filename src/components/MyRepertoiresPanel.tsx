@@ -16,8 +16,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { PlusCircle, Trash2, Play } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet"; // Adicionado SheetClose
+import { PlusCircle, Trash2, Play, X } from 'lucide-react'; // Adicionado X para o botão de fechar
 import { cn } from "@/lib/utils";
 import { Repertoire } from "@/types/repertoire";
 
@@ -50,9 +50,14 @@ const MyRepertoiresPanel: React.FC<MyRepertoiresPanelProps> = ({
 }) => {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md flex flex-col">
-        <SheetHeader>
-          <SheetTitle className="text-2xl text-center">Meus Repertórios</SheetTitle>
+      <SheetContent side="right" className="w-full max-w-full sm:max-w-md flex flex-col"> {/* Ajustado max-w-full */}
+        <SheetHeader className="flex flex-row items-center justify-between p-4 border-b dark:border-gray-700"> {/* Adicionado flex para alinhar título e close */}
+          <SheetTitle className="text-2xl text-center flex-1">Meus Repertórios</SheetTitle>
+          <SheetClose asChild>
+            <Button variant="ghost" size="sm" className="p-2"> {/* Botão de fechar menor */}
+              <X className="h-4 w-4" />
+            </Button>
+          </SheetClose>
         </SheetHeader>
         <div className="flex flex-col flex-1 p-4">
           <div className="flex gap-2 mb-4">
@@ -62,7 +67,7 @@ const MyRepertoiresPanel: React.FC<MyRepertoiresPanelProps> = ({
               onChange={(e) => setNewRepertoireName(e.target.value)}
               className="flex-1"
             />
-            <Button onClick={handleCreateRepertoire} disabled={!newRepertoireName.trim()}>
+            <Button onClick={handleCreateRepertoire} disabled={!newRepertoireName.trim()} size="sm"> {/* Botão menor */}
               <PlusCircle className="mr-2 h-4 w-4" /> Criar
             </Button>
           </div>
@@ -123,6 +128,7 @@ const MyRepertoiresPanel: React.FC<MyRepertoiresPanelProps> = ({
                       onClick={() => handleSelectRepertoire(null)}
                       variant="outline"
                       className="w-full mt-4"
+                      size="sm"
                     >
                       Desselecionar Repertório
                     </Button>
@@ -130,6 +136,7 @@ const MyRepertoiresPanel: React.FC<MyRepertoiresPanelProps> = ({
                       onClick={handleOpenRepertoireViewer}
                       disabled={!selectedRepertoireId || repertoires.find(r => r.id === selectedRepertoireId)?.songIds.length === 0}
                       className="w-full mt-2 bg-purple-600 hover:bg-purple-700 text-white"
+                      size="sm"
                     >
                       <Play className="mr-2 h-4 w-4" /> Abrir Repertório
                     </Button>
