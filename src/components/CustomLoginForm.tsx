@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,9 +16,18 @@ interface CustomLoginFormProps {
 const CustomLoginForm: React.FC<CustomLoginFormProps> = ({ onSignIn }) => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  const [rememberMe, setRememberMe] = useState<boolean>(true); // Default to true as Supabase persists by default
+  const [rememberMe, setRememberMe] = useState<boolean>(true);
   const [isSigningIn, setIsSigningIn] = useState<boolean>(false);
   const [isSigningUp, setIsSigningUp] = useState<boolean>(false);
+
+  // Carregar e-mail salvo do localStorage ao montar o componente
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('rememberedEmail');
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true); // Assume que "Lembrar-me" estava marcado se o e-mail foi salvo
+    }
+  }, []);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +42,12 @@ const CustomLoginForm: React.FC<CustomLoginFormProps> = ({ onSignIn }) => {
       console.error("Erro ao fazer login:", error);
     } else {
       toast.success("Login realizado com sucesso!");
-      onSignIn(); // Trigger parent to update session
+      if (rememberMe) {
+        localStorage.setItem('rememberedEmail', email);
+      } else {
+        localStorage.removeItem('rememberedEmail');
+      }
+      onSignIn();
     }
     setIsSigningIn(false);
   };
@@ -51,9 +65,15 @@ const CustomLoginForm: React.FC<CustomLoginFormProps> = ({ onSignIn }) => {
       console.error("Erro ao registrar:", error);
     } else {
       toast.success("Registro realizado com sucesso! Verifique seu e-mail para confirmar.");
-      // No onSignIn() here, as user needs to confirm email first
     }
     setIsSigningUp(false);
+  };
+
+  const handleRememberMeChange = (checked: boolean) => {
+    setRememberMe(checked);
+    if (!checked) {
+      localStorage.removeItem('rememberedEmail'); // Limpar e-mail se o usuário desmarcar "Lembrar-me"
+    }
   };
 
   return (
@@ -89,7 +109,7 @@ const CustomLoginForm: React.FC<CustomLoginFormProps> = ({ onSignIn }) => {
             <Checkbox
               id="remember-me"
               checked={rememberMe}
-              onCheckedChange={(checked) => setRememberMe(!!checked)}
+              onCheckedChange={handleRememberMeChange}
             />
             <Label htmlFor="remember-me">Lembrar-me</Label>
           </div>
@@ -103,7 +123,6 @@ const CustomLoginForm: React.FC<CustomLoginFormProps> = ({ onSignIn }) => {
             {isSigningUp ? 'Registrando...' : 'Registrar'}
           </Button>
         </div>
-        {/* You can add a forgotten password link here if needed */}
       </CardContent>
     </Card>
   );
