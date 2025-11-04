@@ -10,7 +10,7 @@ import MySongsPanel from "@/components/MySongsPanel";
 import MyRepertoiresPanel from "@/components/MyRepertoiresPanel";
 import ChordRecognizerCore from "@/components/ChordRecognizerCore";
 import ChordViewer from "@/components/ChordViewer";
-import CustomLoginForm from "@/components/CustomLoginForm"; // Importar o novo componente
+import CustomLoginForm from "@/components/CustomLoginForm";
 import { useSongManagement } from "@/hooks/useSongManagement";
 import { useRepertoireManagement } from "@/hooks/useRepertoireManagement";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,10 +28,13 @@ const ChordRecognizer = () => {
   const [activeViewerSongId, setActiveViewerSongId] = useState<string | null>(null);
 
   const [session, setSession] = useState<any>(null);
+  const [loadingSession, setLoadingSession] = useState<boolean>(true); // Novo estado para carregamento da sessão
 
   const getSession = useCallback(async () => {
+    setLoadingSession(true);
     const { data: { session } } = await supabase.auth.getSession();
     setSession(session);
+    setLoadingSession(false);
   }, []);
 
   useEffect(() => {
@@ -41,11 +44,13 @@ const ChordRecognizer = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      setLoadingSession(false); // Garante que o loading seja falso após a mudança de estado de autenticação
     });
 
     return () => subscription.unsubscribe();
   }, [getSession]);
 
+  // Chamar os hooks incondicionalmente no nível superior do componente
   const {
     inputText,
     setInputText,
@@ -134,9 +139,9 @@ const ChordRecognizer = () => {
   }, [viewerSearchTerm, isViewerOpen, isRepertoireViewerActive, prepareViewerSongs]);
 
   const handleOpenFullScreenViewer = () => {
-    setIsRepertoireViewerActive(false); // Default to all songs view
+    setIsRepertoireViewerActive(false); // Default para visualização de todas as músicas
     setViewerSearchTerm('');
-    prepareViewerSongs('', false); // Load all songs initially
+    prepareViewerSongs('', false); // Carrega todas as músicas inicialmente
     if (songs.length > 0) {
       setActiveViewerSongId(songs[0].id);
       setCurrentViewerSongIndex(0);
@@ -159,8 +164,8 @@ const ChordRecognizer = () => {
     }
 
     setIsRepertoireViewerActive(true);
-    setViewerSearchTerm(''); // Clear search for repertoire view
-    prepareViewerSongs('', true); // Load repertoire songs
+    setViewerSearchTerm(''); // Limpa a busca para a visualização do repertório
+    prepareViewerSongs('', true); // Carrega as músicas do repertório
 
     const repertoireSongs = rep.songIds
       .map(id => songs.find(s => s.id === id))
@@ -214,19 +219,30 @@ const ChordRecognizer = () => {
       console.error("Erro ao sair:", error);
     } else {
       toast.success("Você foi desconectado.");
-      setSession(null); // Clear session state
-      handleClear(); // Clear local song data
+      setSession(null); // Limpa o estado da sessão
+      handleClear(); // Limpa os dados locais das músicas
     }
   };
 
-  if (!session) {
+  // Exibir um spinner de carregamento enquanto a sessão está sendo buscada
+  if (loadingSession) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-        <CustomLoginForm onSignIn={getSession} /> {/* Usando o novo componente */}
+        <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
       </div>
     );
   }
 
+  // Se não houver sessão, exibir o formulário de login
+  if (!session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
+        <CustomLoginForm onSignIn={getSession} />
+      </div>
+    );
+  }
+
+  // Se houver sessão, exibir o aplicativo principal
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
       <div className="flex-1 flex flex-col p-4 space-y-4 lg:space-y-0 lg:space-x-4 lg:flex-row">
@@ -299,7 +315,7 @@ const ChordRecognizer = () => {
         onPreviousSong={handlePreviousViewerSong}
         onSearchTermChange={setViewerSearchTerm}
         searchTerm={viewerSearchTerm}
-        searchResults={viewerNavigableSongs.filter(s => s.id !== activeViewerSongId)} // Exclude current song from search results
+        searchResults={viewerNavigableSongs.filter(s => s.id !== activeViewerSongId)}
         onSelectViewerSong={handleSelectViewerSong}
         isRepertoireViewerActive={isRepertoireViewerActive}
         selectedRepertoireName={selectedRepertoire?.name || null}
