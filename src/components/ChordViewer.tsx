@@ -147,7 +147,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
   const LEFT_CONTROL_WIDTH = "272px";
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog key={currentSong?.id || 'viewer-dialog'} open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-full h-[90vh] flex flex-col p-0 sm:max-w-[90vw]">
         <DialogHeader className="p-4 border-b dark:border-gray-700 flex flex-col lg:grid lg:grid-cols-[auto_1fr_auto] items-center gap-2">
           {/* Top row on mobile, left column on desktop */}
