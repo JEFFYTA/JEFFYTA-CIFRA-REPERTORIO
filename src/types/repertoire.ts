@@ -4,4 +4,5 @@ export interface Repertoire {
   name: string;
   songIds: string[]; // Array de IDs de músicas
   created_at: string; // Adicionado para ordenação e persistência
+  updated_at: string; // Adicionado para timestamp de atualização
 }
