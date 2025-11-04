@@ -28,7 +28,7 @@ const ChordRecognizer = () => {
   const [activeViewerSongId, setActiveViewerSongId] = useState<string | null>(null);
 
   const [session, setSession] = useState<any>(null);
-  const [loadingSession, setLoadingSession] = useState<boolean>(true); // Novo estado para carregamento da sessão
+  const [loadingSession, setLoadingSession] = useState<boolean>(true);
 
   const getSession = useCallback(async () => {
     setLoadingSession(true);
@@ -44,13 +44,12 @@ const ChordRecognizer = () => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      setLoadingSession(false); // Garante que o loading seja falso após a mudança de estado de autenticação
+      setLoadingSession(false);
     });
 
     return () => subscription.unsubscribe();
   }, [getSession]);
 
-  // Chamar os hooks incondicionalmente no nível superior do componente
   const {
     inputText,
     setInputText,
@@ -132,23 +131,42 @@ const ChordRecognizer = () => {
     setViewerNavigableSongs(filtered);
   }, [songs, selectedRepertoire]);
 
+  // Este useEffect é responsável por atualizar a lista de músicas navegáveis
   useEffect(() => {
     if (isViewerOpen) {
       prepareViewerSongs(viewerSearchTerm, isRepertoireViewerActive);
     }
   }, [viewerSearchTerm, isViewerOpen, isRepertoireViewerActive, prepareViewerSongs]);
 
-  const handleOpenFullScreenViewer = () => {
-    setIsRepertoireViewerActive(false); // Default para visualização de todas as músicas
-    setViewerSearchTerm('');
-    prepareViewerSongs('', false); // Carrega todas as músicas inicialmente
-    if (songs.length > 0) {
-      setActiveViewerSongId(songs[0].id);
+  // NOVO useEffect para sincronizar a música ativa e o índice
+  useEffect(() => {
+    if (isViewerOpen && viewerNavigableSongs.length > 0) {
+      const currentActiveSongIndexInNewList = viewerNavigableSongs.findIndex(s => s.id === activeViewerSongId);
+
+      if (currentActiveSongIndexInNewList !== -1) {
+        // Se a música ativa anterior ainda estiver na nova lista, mantenha-a ativa e atualize seu índice
+        setCurrentViewerSongIndex(currentActiveSongIndexInNewList);
+      } else {
+        // Caso contrário, defina a primeira música da nova lista como ativa
+        setActiveViewerSongId(viewerNavigableSongs[0].id);
+        setCurrentViewerSongIndex(0);
+      }
+    } else if (isViewerOpen && viewerNavigableSongs.length === 0) {
+      // Se o visualizador estiver aberto, mas não houver músicas navegáveis, limpe a música ativa
+      setActiveViewerSongId(null);
       setCurrentViewerSongIndex(0);
-    } else {
+    } else if (!isViewerOpen) {
+      // Quando o visualizador fecha, redefina a música ativa e o índice
       setActiveViewerSongId(null);
       setCurrentViewerSongIndex(0);
     }
+  }, [viewerNavigableSongs, isViewerOpen]);
+
+
+  const handleOpenFullScreenViewer = () => {
+    setIsRepertoireViewerActive(false);
+    setViewerSearchTerm('');
+    // O useEffect acima cuidará de definir activeViewerSongId e currentViewerSongIndex
     setIsViewerOpen(true);
   };
 
@@ -165,21 +183,7 @@ const ChordRecognizer = () => {
 
     setIsRepertoireViewerActive(true);
     setViewerSearchTerm(''); // Limpa a busca para a visualização do repertório
-    prepareViewerSongs('', true); // Carrega as músicas do repertório
-
-    const repertoireSongs = rep.songIds
-      .map(id => songs.find(s => s.id === id))
-      .filter((s): s is Song => s !== undefined)
-      .sort((a, b) => a.title.localeCompare(b.title));
-
-    if (repertoireSongs.length > 0) {
-      setActiveViewerSongId(repertoireSongs[0].id);
-      setCurrentViewerSongIndex(0);
-    } else {
-      setActiveViewerSongId(null);
-      setCurrentViewerSongIndex(0);
-    }
-
+    // O useEffect acima cuidará de definir activeViewerSongId e currentViewerSongIndex
     setIsViewerOpen(true);
     toast.info(`Abrindo repertório "${rep.name}" em tela cheia.`);
   };
@@ -219,12 +223,11 @@ const ChordRecognizer = () => {
       console.error("Erro ao sair:", error);
     } else {
       toast.success("Você foi desconectado.");
-      setSession(null); // Limpa o estado da sessão
-      handleClear(); // Limpa os dados locais das músicas
+      setSession(null);
+      handleClear();
     }
   };
 
-  // Exibir um spinner de carregamento enquanto a sessão está sendo buscada
   if (loadingSession) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
@@ -233,7 +236,6 @@ const ChordRecognizer = () => {
     );
   }
 
-  // Se não houver sessão, exibir o formulário de login
   if (!session) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
@@ -242,7 +244,6 @@ const ChordRecognizer = () => {
     );
   }
 
-  // Se houver sessão, exibir o aplicativo principal
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
       <div className="flex-1 flex flex-col p-4 space-y-4 lg:space-y-0 lg:space-x-4 lg:flex-row">
