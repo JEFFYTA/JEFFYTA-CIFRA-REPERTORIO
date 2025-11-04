@@ -6,8 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"; // Adicionado DropdownMenu
-import { ChevronLeft, ChevronRight, Save, Minimize2, Search, ZoomIn, ZoomOut, Edit, EllipsisVertical } from 'lucide-react'; // Adicionado Edit e EllipsisVertical
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { ChevronLeft, ChevronRight, Save, X, Search, ZoomIn, ZoomOut, Edit, EllipsisVertical } from 'lucide-react'; // Usando X para fechar
 import { cn } from "@/lib/utils";
 import { Song } from "@/types/song";
 import { transposeChordLine } from "@/lib/chordUtils";
@@ -51,16 +51,15 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
   const [viewerTransposeDelta, setViewerTransposeDelta] = useState<number>(0);
   const [viewerFontSize, setViewerFontSize] = useState<number>(1.2);
   const [showSearchResults, setShowSearchResults] = useState<boolean>(false);
-  const [isEditing, setIsEditing] = useState<boolean>(false); // Novo estado para modo de edição
-  const [editedContent, setEditedContent] = useState<string>(''); // Novo estado para o conteúdo editado
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [editedContent, setEditedContent] = useState<string>('');
 
   useEffect(() => {
-    // Reset transpose, font size, and editing state when a new song is loaded or viewer opens/closes
     setViewerTransposeDelta(0);
     setViewerFontSize(1.2);
     setShowSearchResults(false);
-    setIsEditing(false); // Reset editing state
-    setEditedContent(''); // Clear edited content
+    setIsEditing(false);
+    setEditedContent('');
   }, [currentSong, open]);
 
   const getViewerContent = useCallback(() => {
@@ -109,7 +108,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
 
     const currentTransposedContent = getViewerContent();
     onSaveTransposition(currentSong.id, currentTransposedContent);
-    setViewerTransposeDelta(0); // Reset internal delta after saving
+    setViewerTransposeDelta(0);
     toast.success("Transposição salva com sucesso!");
   };
 
@@ -118,10 +117,10 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
       toast.error("Não há conteúdo para salvar.");
       return;
     }
-    onSaveTransposition(currentSong.id, editedContent); // Reutiliza a função de salvar
-    setIsEditing(false); // Sai do modo de edição
-    setEditedContent(''); // Limpa o conteúdo editado
-    setViewerTransposeDelta(0); // Reseta a transposição, pois o conteúdo salvo é o novo original
+    onSaveTransposition(currentSong.id, editedContent);
+    setIsEditing(false);
+    setEditedContent('');
+    setViewerTransposeDelta(0);
     toast.success("Edição salva com sucesso!");
   };
 
@@ -131,10 +130,8 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
       return;
     }
     if (!isEditing) {
-      // Entrando no modo de edição, inicializa com o conteúdo atual (já transposto, se houver)
       setEditedContent(getViewerContent());
     } else {
-      // Saindo do modo de edição, descarta as alterações não salvas
       setEditedContent('');
     }
     setIsEditing(prev => !prev);
@@ -151,7 +148,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
         <DialogHeader className="p-4 border-b dark:border-gray-700 flex items-center justify-between gap-2">
           {/* Search Input (conditional) */}
           {!isRepertoireViewerActive && (
-            <div className="relative flex-grow max-w-[200px] sm:max-w-[unset]"> {/* Added flex-grow and max-width for better mobile layout */}
+            <div className="relative flex-grow max-w-[200px] sm:max-w-[unset]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400" />
               <Input
                 placeholder="Buscar..."
@@ -164,7 +161,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
           )}
 
           {/* Title (centered) */}
-          <DialogTitle className="text-xl text-center flex-1 min-w-0 truncate"> {/* min-w-0 truncate for long titles */}
+          <DialogTitle className="text-xl text-center flex-1 min-w-0 truncate">
             {getViewerTitle()}
           </DialogTitle>
 
@@ -208,14 +205,14 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
           {/* Close Button */}
           <DialogClose asChild>
             <Button variant="ghost" size="sm" className="p-2">
-              <Minimize2 className="h-4 w-4" />
+              <X className="h-4 w-4" />
             </Button>
           </DialogClose>
         </DialogHeader>
 
-        {/* Search Results (if any, moved from previous section) */}
+        {/* Search Results (if any) */}
         {!isRepertoireViewerActive && showSearchResults && searchTerm.trim() !== '' && searchResults.length > 0 && (
-          <ScrollArea className="mt-0 h-40 border-b border-x rounded-b-md mx-4 -mt-2 z-10 bg-background relative"> {/* Adjusted margin and z-index */}
+          <ScrollArea className="h-40 border-b border-x rounded-b-md mx-4 -mt-2 z-10 bg-background relative">
             <div className="p-2 space-y-1">
               {searchResults.map((song) => (
                 <Button
