@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { ChevronLeft, ChevronRight, Save, X, Search, ZoomIn, ZoomOut, Edit, EllipsisVertical } from 'lucide-react'; // Usando X para fechar
+import { ChevronLeft, ChevronRight, Save, X, Search, ZoomIn, ZoomOut, Edit, EllipsisVertical } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Song } from "@/types/song";
 import { transposeChordLine } from "@/lib/chordUtils";
@@ -145,10 +145,65 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-full h-[90vh] flex flex-col p-0 sm:max-w-[90vw]">
-        <DialogHeader className="p-4 border-b dark:border-gray-700 flex items-center justify-between gap-2">
-          {/* Search Input (conditional) */}
-          {!isRepertoireViewerActive && (
-            <div className="relative flex-grow max-w-[200px] sm:max-w-[unset]">
+        <DialogHeader className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
+          {/* Left placeholder to help center title */}
+          <div className="w-8"></div> 
+
+          {/* Title (centered) */}
+          <DialogTitle className="text-xl text-center flex-1 min-w-0 truncate">
+            {getViewerTitle()}
+          </DialogTitle>
+
+          {/* Right section: Dropdown Menu and Close Button */}
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="p-2">
+                  <EllipsisVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleToggleEdit} disabled={!currentSong}>
+                  <Edit className="mr-2 h-4 w-4" /> {isEditing ? 'Cancelar Edição' : 'Editar'}
+                </DropdownMenuItem>
+                {isEditing ? (
+                  <DropdownMenuItem onClick={handleSaveEdit} disabled={!currentSong || !editedContent.trim()}>
+                    <Save className="mr-2 h-4 w-4" /> Salvar Edição
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onClick={handleInternalSaveTransposition} disabled={!currentSong || viewerTransposeDelta === 0}>
+                    <Save className="mr-2 h-4 w-4" /> Salvar Transposição
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setViewerTransposeDelta(prev => prev - 1)} disabled={!currentSong || isEditing}>
+                  Transpor -1
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setViewerTransposeDelta(prev => prev + 1)} disabled={!currentSong || isEditing}>
+                  Transpor +1
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setViewerFontSize(prev => Math.max(prev - 0.1, 0.8))} disabled={!currentSong}>
+                  <ZoomOut className="mr-2 h-4 w-4" /> Diminuir Fonte
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setViewerFontSize(prev => Math.min(prev + 0.1, 2.5))} disabled={!currentSong}>
+                  <ZoomIn className="mr-2 h-4 w-4" /> Aumentar Fonte
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DialogClose asChild>
+              <Button variant="ghost" size="sm" className="p-2">
+                <X className="h-4 w-4" />
+              </Button>
+            </DialogClose>
+          </div>
+        </DialogHeader>
+
+        {/* Search Input and Search Results (if not in repertoire mode) */}
+        {!isRepertoireViewerActive && (
+          <div className="p-4 border-b dark:border-gray-700">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400" />
               <Input
                 placeholder="Buscar..."
@@ -158,83 +213,35 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
                 disabled={isEditing}
               />
             </div>
-          )}
-
-          {/* Title (centered) */}
-          <DialogTitle className="text-xl text-center flex-1 min-w-0 truncate">
-            {getViewerTitle()}
-          </DialogTitle>
-
-          {/* Dropdown Menu for other actions */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="p-2">
-                <EllipsisVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleToggleEdit} disabled={!currentSong}>
-                <Edit className="mr-2 h-4 w-4" /> {isEditing ? 'Cancelar Edição' : 'Editar'}
-              </DropdownMenuItem>
-              {isEditing ? (
-                <DropdownMenuItem onClick={handleSaveEdit} disabled={!currentSong || !editedContent.trim()}>
-                  <Save className="mr-2 h-4 w-4" /> Salvar Edição
-                </DropdownMenuItem>
-              ) : (
-                <DropdownMenuItem onClick={handleInternalSaveTransposition} disabled={!currentSong || viewerTransposeDelta === 0}>
-                  <Save className="mr-2 h-4 w-4" /> Salvar Transposição
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setViewerTransposeDelta(prev => prev - 1)} disabled={!currentSong || isEditing}>
-                Transpor -1
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setViewerTransposeDelta(prev => prev + 1)} disabled={!currentSong || isEditing}>
-                Transpor +1
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setViewerFontSize(prev => Math.max(prev - 0.1, 0.8))} disabled={!currentSong}>
-                <ZoomOut className="mr-2 h-4 w-4" /> Diminuir Fonte
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setViewerFontSize(prev => Math.min(prev + 0.1, 2.5))} disabled={!currentSong}>
-                <ZoomIn className="mr-2 h-4 w-4" /> Aumentar Fonte
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Close Button */}
-          <DialogClose asChild>
-            <Button variant="ghost" size="sm" className="p-2">
-              <X className="h-4 w-4" />
-            </Button>
-          </DialogClose>
-        </DialogHeader>
-
-        {/* Search Results (if any) */}
-        {!isRepertoireViewerActive && showSearchResults && searchTerm.trim() !== '' && searchResults.length > 0 && (
-          <ScrollArea className="h-40 border-b border-x rounded-b-md mx-4 -mt-2 z-10 bg-background relative">
-            <div className="p-2 space-y-1">
-              {searchResults.map((song) => (
-                <Button
-                  key={song.id}
-                  variant="ghost"
-                  className={cn(
-                    "w-full justify-start",
-                    currentSong?.id === song.id && "bg-accent text-accent-foreground"
-                  )}
-                  onClick={() => {
-                    onSelectViewerSong(song.id);
-                    setShowSearchResults(false);
-                  }}
-                >
-                  {song.title}
-                </Button>
-              ))}
-            </div>
-          </ScrollArea>
-        )}
-        {!isRepertoireViewerActive && showSearchResults && searchTerm.trim() !== '' && searchResults.length === 0 && (
-          <p className="text-center text-gray-500 dark:text-gray-400 mt-2">Nenhuma música encontrada.</p>
+            {showSearchResults && searchTerm.trim() !== '' && (
+              <div className="mt-2">
+                {searchResults.length > 0 ? (
+                  <ScrollArea className="h-40 border rounded-md">
+                    <div className="p-2 space-y-1">
+                      {searchResults.map((song) => (
+                        <Button
+                          key={song.id}
+                          variant="ghost"
+                          className={cn(
+                            "w-full justify-start",
+                            currentSong?.id === song.id && "bg-accent text-accent-foreground"
+                          )}
+                          onClick={() => {
+                            onSelectViewerSong(song.id);
+                            setShowSearchResults(false);
+                          }}
+                        >
+                          {song.title}
+                        </Button>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                ) : (
+                  <p className="text-center text-gray-500 dark:text-gray-400">Nenhuma música encontrada.</p>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         <div className="flex-1 p-4 overflow-auto font-mono leading-relaxed">
@@ -249,7 +256,6 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
         </div>
 
         <div className="flex flex-wrap justify-center gap-2 p-4 border-t dark:border-gray-700">
-          {/* Navigation buttons remain exposed */}
           <Button
             onClick={onPreviousSong}
             disabled={!currentSong || viewerNavigableSongs.length <= 1 || isEditing}
