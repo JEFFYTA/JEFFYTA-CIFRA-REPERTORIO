@@ -1,5 +1,4 @@
 "use client";
-/** @jsxImportSource react */ // Adicionado: Instrução explícita para o compilador JSX
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
@@ -143,67 +142,72 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
     setShowSearchResults(true);
   };
 
-  // Calculate the fixed width for the left control group on desktop
-  // Search input (w-48 = 192px) + Dropdown button (32px) + Close button (32px) + 2 gaps (2 * 8px = 16px) = 272px
-  const LEFT_CONTROL_WIDTH = "272px";
-
   return (
-    <Dialog key={currentSong?.id || 'viewer-dialog'} open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-full h-[90vh] flex flex-col p-0 sm:max-w-[90vw]">
-        <DialogHeader className="p-4 border-b dark:border-gray-700 flex flex-col lg:grid lg:grid-cols-[auto_1fr_auto] items-center gap-2">
-          {/* Top row on mobile, left column on desktop */}
-          <div className="flex items-center gap-2 relative z-40 w-full lg:w-auto">
+        <DialogHeader className="p-4 border-b dark:border-gray-700 flex items-center justify-between relative">
+          {/* Left side: Search input and its results dropdown */}
+          <div className="relative flex-shrink-0 w-48"> {/* Fixed width for search area */}
             {!isRepertoireViewerActive ? (
-              <div className="relative flex-1 lg:w-48"> {/* flex-1 on mobile, fixed w-48 on desktop */}
+              <>
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400 z-10" />
                 <Input
                   placeholder="Buscar..."
                   value={searchTerm}
                   onChange={handleSearchInputChange}
-                  className="pl-9 w-full relative z-20"
+                  className="pl-9 w-full relative z-20" // Higher z-index for input
                   disabled={isEditing}
-                  onFocus={() => setShowSearchResults(true)}
-                  onBlur={() => setTimeout(() => setShowSearchResults(false), 100)}
+                  onFocus={() => setShowSearchResults(true)} // Show results on focus
+                  onBlur={() => setTimeout(() => setShowSearchResults(false), 100)} // Hide after a short delay to allow click on results
                 />
-                {showSearchResults && searchTerm.trim() !== '' && (
-                  <ScrollArea className="absolute top-full left-0 w-full h-40 border rounded-md bg-background shadow-lg z-30">
+                {showSearchResults && searchTerm.trim() !== '' && searchResults.length > 0 && (
+                  <ScrollArea className="absolute top-full left-0 w-full h-40 border rounded-md bg-background shadow-lg z-30"> {/* Absolute positioning */}
                     <div className="p-2 space-y-1">
-                      {searchResults.length > 0 ? (
-                        searchResults.map((song) => (
-                          <Button
-                            key={song.id}
-                            variant="ghost"
-                            className={cn(
-                              "w-full justify-start",
-                              currentSong?.id === song.id && "bg-accent text-accent-foreground"
-                            )}
-                            onClick={() => {
-                              onSelectViewerSong(song.id);
-                              setShowSearchResults(false);
-                            }}
-                          >
-                            {song.title}
-                          </Button>
-                        ))
-                      ) : (
-                        <p className="text-center text-gray-500 dark:text-gray-400">Nenhuma música encontrada.</p>
-                      )}
+                      {searchResults.map((song) => (
+                        <Button
+                          key={song.id}
+                          variant="ghost"
+                          className={cn(
+                            "w-full justify-start",
+                            currentSong?.id === song.id && "bg-accent text-accent-foreground"
+                          )}
+                          onClick={() => {
+                            onSelectViewerSong(song.id);
+                            setShowSearchResults(false);
+                          }}
+                        >
+                          {song.title}
+                        </Button>
+                      ))}
                     </div>
                   </ScrollArea>
                 )}
-              </div>
+                {showSearchResults && searchTerm.trim() !== '' && searchResults.length === 0 && (
+                  <div className="absolute top-full left-0 w-full p-2 border rounded-md bg-background shadow-lg z-30 text-center text-gray-500 dark:text-gray-400">
+                    Nenhuma música encontrada.
+                  </div>
+                )}
+              </>
             ) : (
-              <div className="flex-1 lg:w-48"></div> {/* Placeholder for alignment on desktop */}
+              // Placeholder to balance the right side if search is not active
+              <div className="w-full h-8"></div> // Adjust height as needed
             )}
+          </div>
 
-            {/* Dropdown Menu for other actions */}
+          {/* Center: Title */}
+          <DialogTitle className="text-xl text-center flex-1 min-w-0 truncate absolute left-1/2 -translate-x-1/2">
+            {getViewerTitle()}
+          </DialogTitle>
+
+          {/* Right side: Dropdown and Close button */}
+          <div className="flex items-center gap-2 flex-shrink-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="p-2">
                   <EllipsisVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
+              <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={handleToggleEdit} disabled={!currentSong}>
                   <Edit className="mr-2 h-4 w-4" /> {isEditing ? 'Cancelar Edição' : 'Editar'}
                 </DropdownMenuItem>
@@ -233,21 +237,12 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Close Button */}
             <DialogClose asChild>
               <Button variant="ghost" size="sm" className="p-2">
                 <X className="h-4 w-4" />
               </Button>
             </DialogClose>
           </div>
-
-          {/* Title - second row on mobile, middle column on desktop */}
-          <DialogTitle className="text-xl text-center min-w-0 truncate w-full mt-2 lg:mt-0 lg:col-start-2 lg:col-end-3">
-            {getViewerTitle()}
-          </DialogTitle>
-
-          {/* Right side: Empty placeholder to balance the left side on desktop */}
-          <div className="hidden lg:block" style={{ width: LEFT_CONTROL_WIDTH }}></div>
         </DialogHeader>
 
         <div className="flex-1 p-4 overflow-auto font-mono leading-relaxed">
