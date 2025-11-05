@@ -92,7 +92,8 @@ export const useSongManagement = ({ initialInputText = '' }: UseSongManagementPr
   };
 
   const handleSaveSong = async () => {
-    if (!inputText.trim() || !outputText.trim()) {
+    // Apenas outputText é estritamente necessário para salvar as cifras
+    if (!outputText.trim()) {
       toast.error("Não há música para salvar. Por favor, cole o conteúdo primeiro.");
       return;
     }
@@ -110,7 +111,7 @@ export const useSongManagement = ({ initialInputText = '' }: UseSongManagementPr
     const newSongData = {
       user_id: user.user.id,
       title: newSongTitle.trim(),
-      original_content: inputText,
+      original_content: inputText, // Salva o inputText, mesmo que esteja vazio
       extracted_chords: outputText,
     };
 
