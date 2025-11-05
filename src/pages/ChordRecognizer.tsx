@@ -101,14 +101,10 @@ const ChordRecognizer = () => {
     }
   };
 
-  const handleCopyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(outputText);
-      toast.success("Cifras copiadas para a área de transferência!");
-    } catch (err) {
-      console.error("Failed to copy text: ", err);
-      toast.error("Falha ao copiar cifras.");
-    }
+  const handleSaveOutput = () => {
+    // Esta função será chamada quando o botão "Salvar" no ChordRecognizerCore for clicado.
+    // Ela deve acionar a lógica de salvar a música atual.
+    handleSaveSong();
   };
 
   const prepareViewerSongs = useCallback((search: string, isRepertoireMode: boolean) => {
@@ -306,7 +302,7 @@ const ChordRecognizer = () => {
           onTranspose={handleTranspose}
           onRestore={handleRestore}
           onClear={handleClear}
-          onCopyToClipboard={handleCopyToClipboard}
+          onSaveOutput={handleSaveOutput} // Passando a nova função
           onOpenFullScreenViewer={handleOpenFullScreenViewer}
           onSignOut={handleSignOut}
         />

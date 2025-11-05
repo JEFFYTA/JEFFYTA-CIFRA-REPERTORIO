@@ -4,7 +4,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Copy, Maximize2 } from 'lucide-react';
+import { Save, Maximize2 } from 'lucide-react'; // Alterado Copy para Save
 
 interface ChordRecognizerCoreProps {
   inputText: string;
@@ -13,7 +13,7 @@ interface ChordRecognizerCoreProps {
   onTranspose: (delta: number) => void;
   onRestore: () => void;
   onClear: () => void;
-  onCopyToClipboard: () => void;
+  onSaveOutput: () => void; // Novo prop para salvar o output
   onOpenFullScreenViewer: () => void;
   onSignOut: () => void;
 }
@@ -25,7 +25,7 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
   onTranspose,
   onRestore,
   onClear,
-  onCopyToClipboard,
+  onSaveOutput, // Usar o novo prop
   onOpenFullScreenViewer,
   onSignOut,
 }) => {
@@ -60,8 +60,8 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
             <Button onClick={() => onTranspose(1)} className="bg-green-600 hover:bg-green-700 text-white">Transpor +1</Button>
             <Button onClick={() => onTranspose(-1)} className="bg-red-600 hover:bg-red-700 text-white">Transpor -1</Button>
             <Button onClick={onRestore} className="bg-blue-600 hover:bg-blue-700 text-white">Restaurar</Button>
-            <Button onClick={onCopyToClipboard} disabled={!outputText || outputText.trim() === ''} variant="outline">
-              <Copy className="mr-2 h-4 w-4" /> Copiar
+            <Button onClick={onSaveOutput} disabled={!outputText || outputText.trim() === ''} variant="outline">
+              <Save className="mr-2 h-4 w-4" /> Salvar
             </Button>
             <Button
               variant="outline"
