@@ -55,7 +55,7 @@ const MySongsPanel: React.FC<MySongsPanelProps> = ({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md flex flex-col">
+      <SheetContent side="right" className="w-full sm:max-w-lg flex flex-col"> {/* Aumentado para sm:max-w-lg */}
         <SheetHeader className="flex flex-row items-center justify-between p-4 border-b dark:border-gray-700">
           <SheetTitle className="text-2xl text-center flex-1">Minhas Músicas</SheetTitle>
           <SheetClose asChild>
@@ -92,8 +92,8 @@ const MySongsPanel: React.FC<MySongsPanelProps> = ({
                         currentSongIndex !== null && songs[currentSongIndex]?.id === song.id && "bg-blue-50 dark:bg-blue-900 border-blue-500 ring-2 ring-blue-500"
                       )}
                     >
-                      <span className="font-medium truncate flex-grow">{song.title}</span> {/* Adicionado flex-grow */}
-                      <div className="flex gap-1 items-center flex-shrink-0"> {/* Adicionado flex-shrink-0 */}
+                      <span className="font-medium truncate flex-grow mr-2">{song.title}</span> {/* Adicionado flex-grow e mr-2 */}
+                      <div className="flex gap-1 items-center flex-shrink-0 min-w-[100px]"> {/* Adicionado min-w para garantir espaço */}
                         {selectedRepertoireId && (
                           <div className="flex items-center space-x-2">
                             <Switch
