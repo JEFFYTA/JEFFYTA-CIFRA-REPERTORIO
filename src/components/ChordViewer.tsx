@@ -144,7 +144,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-full h-[90vh] flex flex-col p-0 sm:max-w-[90vw]">
+      <DialogContent className="w-full max-w-full h-screen flex flex-col p-0 sm:max-w-[90vw] sm:h-[90vh]"> {/* Alterado h-[90vh] para h-screen e adicionado sm:h-[90vh] para telas maiores */}
         <DialogHeader className="p-4 border-b dark:border-gray-700 grid grid-cols-[auto_1fr_auto] items-center gap-2">
           {/* Left side: Search input (conditional), Dropdown, Close button */}
           <div className="flex items-center gap-2 relative z-40">
