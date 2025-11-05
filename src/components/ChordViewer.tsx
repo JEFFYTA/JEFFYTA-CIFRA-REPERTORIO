@@ -1,4 +1,5 @@
 "use client";
+/** @jsxImportSource react */ // Adicionado: Instrução explícita para o compilador JSX
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
