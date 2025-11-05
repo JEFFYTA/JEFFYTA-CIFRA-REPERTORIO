@@ -377,8 +377,8 @@ const ChordRecognizer = () => {
             handleUpdateSongChords(currentViewerSong.id, newContent);
           }
         }}
-        onSaveTransposition={(songId, newContent) => {
-          handleUpdateSongChords(songId, newContent);
+        onSaveTransposition={async (songId, newContent) => { // Tornando a função assíncrona
+          await handleUpdateSongChords(songId, newContent);
           toast.success("Transposição salva com sucesso!");
         }}
       />

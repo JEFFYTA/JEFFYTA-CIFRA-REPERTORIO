@@ -28,7 +28,7 @@ interface ChordViewerProps {
   isRepertoireViewerActive: boolean;
   selectedRepertoireName: string | null;
   onContentChange: (newContent: string) => void;
-  onSaveTransposition: (songId: string, newContent: string) => void;
+  onSaveTransposition: (songId: string, newContent: string) => Promise<void>; // Tipo atualizado para retornar Promise
 }
 
 const ChordViewer: React.FC<ChordViewerProps> = ({
@@ -100,24 +100,24 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
     return currentSong.title;
   };
 
-  const handleInternalSaveTransposition = () => {
+  const handleInternalSaveTransposition = async () => { // Tornando a função assíncrona
     if (!currentSong || viewerTransposeDelta === 0) {
       toast.info("Nenhuma transposição para salvar ou nenhuma música selecionada.");
       return;
     }
 
     const currentTransposedContent = getViewerContent();
-    onSaveTransposition(currentSong.id, currentTransposedContent);
+    await onSaveTransposition(currentSong.id, currentTransposedContent); // Aguardando a conclusão
     setViewerTransposeDelta(0);
     toast.success("Transposição salva com sucesso!");
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => { // Tornando a função assíncrona
     if (!currentSong || !editedContent.trim()) {
       toast.error("Não há conteúdo para salvar.");
       return;
     }
-    onSaveTransposition(currentSong.id, editedContent);
+    await onSaveTransposition(currentSong.id, editedContent); // Aguardando a conclusão
     setIsEditing(false);
     setEditedContent('');
     setViewerTransposeDelta(0);
@@ -130,7 +130,8 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
       return;
     }
     if (!isEditing) {
-      setEditedContent(getViewerContent());
+      // Ao entrar no modo de edição, inicializa com o conteúdo atual (que pode estar transposto)
+      setEditedContent(getViewerContent()); 
     } else {
       setEditedContent('');
     }
@@ -144,7 +145,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-full h-screen flex flex-col p-0 sm:max-w-[90vw] sm:h-[90vh]"> {/* Alterado h-[90vh] para h-screen e adicionado sm:h-[90vh] para telas maiores */}
+      <DialogContent className="w-full max-w-full h-screen flex flex-col p-0 sm:max-w-[90vw] sm:h-[90vh]">
         <DialogHeader className="p-4 border-b dark:border-gray-700 grid grid-cols-[auto_1fr_auto] items-center gap-2">
           {/* Left side: Search input (conditional), Dropdown, Close button */}
           <div className="flex items-center gap-2 relative z-40">
