@@ -190,37 +190,37 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
             )}
 
             {/* Dropdown Menu for other actions */}
-            <DropdownMenu modal={false}> {/* Adicionado modal={false} aqui */}
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="p-2">
                   <EllipsisVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
-                <DropdownMenuItem onClick={handleToggleEdit} disabled={!currentSong}>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleToggleEdit} disabled={!currentSong}>
                   <Edit className="mr-2 h-4 w-4" /> {isEditing ? 'Cancelar Edição' : 'Editar'}
                 </DropdownMenuItem>
                 {isEditing ? (
-                  <DropdownMenuItem onClick={handleSaveEdit} disabled={!currentSong || !editedContent.trim()}>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleSaveEdit} disabled={!currentSong || !editedContent.trim()}>
                     <Save className="mr-2 h-4 w-4" /> Salvar Edição
                   </DropdownMenuItem>
                 ) : (
-                  <DropdownMenuItem onClick={handleInternalSaveTransposition} disabled={!currentSong || viewerTransposeDelta === 0}>
+                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleInternalSaveTransposition} disabled={!currentSong || viewerTransposeDelta === 0}>
                     <Save className="mr-2 h-4 w-4" /> Salvar Transposição
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setViewerTransposeDelta(prev => prev - 1)} disabled={!currentSong || isEditing}>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setViewerTransposeDelta(prev => prev - 1)} disabled={!currentSong || isEditing}>
                   Transpor -1
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setViewerTransposeDelta(prev => prev + 1)} disabled={!currentSong || isEditing}>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setViewerTransposeDelta(prev => prev + 1)} disabled={!currentSong || isEditing}>
                   Transpor +1
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setViewerFontSize(prev => Math.max(prev - 0.1, 0.8))} disabled={!currentSong}>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setViewerFontSize(prev => Math.max(prev - 0.1, 0.8))} disabled={!currentSong}>
                   <ZoomOut className="mr-2 h-4 w-4" /> Diminuir Fonte
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setViewerFontSize(prev => Math.min(prev + 0.1, 2.5))} disabled={!currentSong}>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setViewerFontSize(prev => Math.min(prev + 0.1, 2.5))} disabled={!currentSong}>
                   <ZoomIn className="mr-2 h-4 w-4" /> Aumentar Fonte
                 </DropdownMenuItem>
               </DropdownMenuContent>
