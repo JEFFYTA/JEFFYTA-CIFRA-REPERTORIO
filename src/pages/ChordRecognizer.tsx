@@ -102,9 +102,13 @@ const ChordRecognizer = () => {
   };
 
   const handleSaveOutput = () => {
-    // Esta função será chamada quando o botão "Salvar" no ChordRecognizerCore for clicado.
-    // Ela deve acionar a lógica de salvar a música atual.
     handleSaveSong();
+  };
+
+  // NOVO: Manipulador para quando o outputText é alterado diretamente
+  const handleOutputTextChange = (newText: string) => {
+    setOutputText(newText);
+    setOriginalOutputText(newText); // Atualiza o originalOutputText para que o restore funcione com a edição direta
   };
 
   const prepareViewerSongs = useCallback((search: string, isRepertoireMode: boolean) => {
@@ -299,10 +303,11 @@ const ChordRecognizer = () => {
           inputText={inputText}
           onInputTextChange={setInputText}
           outputText={outputText}
+          onOutputTextChange={handleOutputTextChange} // Passando o novo manipulador
           onTranspose={handleTranspose}
           onRestore={handleRestore}
           onClear={handleClear}
-          onSaveOutput={handleSaveOutput} // Passando a nova função
+          onSaveOutput={handleSaveOutput}
           onOpenFullScreenViewer={handleOpenFullScreenViewer}
           onSignOut={handleSignOut}
         />

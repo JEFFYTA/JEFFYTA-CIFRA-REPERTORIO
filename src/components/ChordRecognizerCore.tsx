@@ -4,16 +4,17 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Save, Maximize2 } from 'lucide-react'; // Alterado Copy para Save
+import { Save, Maximize2 } from 'lucide-react';
 
 interface ChordRecognizerCoreProps {
   inputText: string;
   onInputTextChange: (text: string) => void;
   outputText: string;
+  onOutputTextChange: (text: string) => void; // Novo prop para mudanças no outputText
   onTranspose: (delta: number) => void;
   onRestore: () => void;
   onClear: () => void;
-  onSaveOutput: () => void; // Novo prop para salvar o output
+  onSaveOutput: () => void;
   onOpenFullScreenViewer: () => void;
   onSignOut: () => void;
 }
@@ -22,10 +23,11 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
   inputText,
   onInputTextChange,
   outputText,
+  onOutputTextChange, // Usar o novo prop
   onTranspose,
   onRestore,
   onClear,
-  onSaveOutput, // Usar o novo prop
+  onSaveOutput,
   onOpenFullScreenViewer,
   onSignOut,
 }) => {
@@ -74,7 +76,7 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
           <Textarea
             id="output"
             value={outputText}
-            readOnly
+            onChange={(e) => onOutputTextChange(e.target.value)} {/* Removido readOnly */}
             className="flex-1 min-h-[300px] lg:min-h-[600px] font-mono text-base resize-y bg-gray-50 dark:bg-gray-800"
           />
         </CardContent>
