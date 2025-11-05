@@ -303,13 +303,15 @@ const ChordRecognizer = () => {
           inputText={inputText}
           onInputTextChange={setInputText}
           outputText={outputText}
-          onOutputTextChange={handleOutputTextChange} // Passando o novo manipulador
+          onOutputTextChange={handleOutputTextChange}
           onTranspose={handleTranspose}
           onRestore={handleRestore}
           onClear={handleClear}
           onSaveOutput={handleSaveOutput}
           onOpenFullScreenViewer={handleOpenFullScreenViewer}
           onSignOut={handleSignOut}
+          newSongTitle={newSongTitle} // Passando newSongTitle
+          onNewSongTitleChange={setNewSongTitle} // Passando setNewSongTitle
         />
       </div>
 
@@ -335,9 +337,6 @@ const ChordRecognizer = () => {
         onOpenChange={setIsSongsPanelOpen}
         songs={songs}
         currentSongIndex={currentSongIndex}
-        newSongTitle={newSongTitle}
-        setNewSongTitle={setNewSongTitle}
-        handleSaveSong={handleSaveSong}
         handleLoadSong={handleLoadSong}
         handleDeleteSong={handleDeleteSong}
         selectedRepertoireId={selectedRepertoireId}

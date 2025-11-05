@@ -16,23 +16,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet"; // Adicionado SheetClose
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Save, Trash2, Search, X } from 'lucide-react'; // Adicionado X para o botão de fechar
+import { Trash2, Search, X } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Repertoire } from "@/types/repertoire";
-import { Song } from "@/types/song"; // Importar o tipo Song
+import { Song } from "@/types/song";
 
 interface MySongsPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   songs: Song[];
   currentSongIndex: number | null;
-  newSongTitle: string;
-  setNewSongTitle: (title: string) => void;
-  handleSaveSong: () => void;
-  handleLoadSong: (id: string) => void; // Alterado para receber ID
+  handleLoadSong: (id: string) => void;
   handleDeleteSong: (id: string) => void;
   selectedRepertoireId: string | null;
   selectedRepertoire: Repertoire | null;
@@ -44,9 +41,6 @@ const MySongsPanel: React.FC<MySongsPanelProps> = ({
   onOpenChange,
   songs,
   currentSongIndex,
-  newSongTitle,
-  setNewSongTitle,
-  handleSaveSong,
   handleLoadSong,
   handleDeleteSong,
   selectedRepertoireId,
@@ -62,27 +56,15 @@ const MySongsPanel: React.FC<MySongsPanelProps> = ({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md flex flex-col">
-        <SheetHeader className="flex flex-row items-center justify-between p-4 border-b dark:border-gray-700"> {/* Adicionado flex para alinhar título e close */}
+        <SheetHeader className="flex flex-row items-center justify-between p-4 border-b dark:border-gray-700">
           <SheetTitle className="text-2xl text-center flex-1">Minhas Músicas</SheetTitle>
           <SheetClose asChild>
-            <Button variant="ghost" size="sm" className="p-2"> {/* Botão de fechar menor */}
+            <Button variant="ghost" size="sm" className="p-2">
               <X className="h-4 w-4" />
             </Button>
           </SheetClose>
         </SheetHeader>
         <div className="flex flex-col flex-1 p-4">
-          <div className="flex gap-2 mb-4">
-            <Input
-              placeholder="Título da música"
-              value={newSongTitle}
-              onChange={(e) => setNewSongTitle(e.target.value)}
-              className="flex-1"
-            />
-            <Button onClick={handleSaveSong} disabled={!newSongTitle.trim()}>
-              <Save className="mr-2 h-4 w-4" /> Salvar
-            </Button>
-          </div>
-
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400" />
             <Input
@@ -125,7 +107,7 @@ const MySongsPanel: React.FC<MySongsPanelProps> = ({
                           </div>
                         )}
                         <Button
-                          onClick={() => handleLoadSong(song.id)} // Passar o ID da música
+                          onClick={() => handleLoadSong(song.id)}
                           variant="ghost"
                           size="sm"
                           className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"

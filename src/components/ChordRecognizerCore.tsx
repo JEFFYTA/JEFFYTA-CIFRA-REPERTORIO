@@ -4,32 +4,38 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input"; // Importar Input
+import { Label } from "@/components/ui/label"; // Importar Label
 import { Save, Maximize2 } from 'lucide-react';
 
 interface ChordRecognizerCoreProps {
   inputText: string;
   onInputTextChange: (text: string) => void;
   outputText: string;
-  onOutputTextChange: (text: string) => void; // Prop para mudanças no outputText
+  onOutputTextChange: (text: string) => void;
   onTranspose: (delta: number) => void;
   onRestore: () => void;
   onClear: () => void;
   onSaveOutput: () => void;
   onOpenFullScreenViewer: () => void;
   onSignOut: () => void;
+  newSongTitle: string; // Adicionado
+  onNewSongTitleChange: (title: string) => void; // Adicionado
 }
 
 const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
   inputText,
   onInputTextChange,
   outputText,
-  onOutputTextChange, // Usar o prop
+  onOutputTextChange,
   onTranspose,
   onRestore,
   onClear,
   onSaveOutput,
   onOpenFullScreenViewer,
   onSignOut,
+  newSongTitle, // Usado
+  onNewSongTitleChange, // Usado
 }) => {
   return (
     <>
@@ -62,9 +68,6 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
             <Button onClick={() => onTranspose(1)} className="bg-green-600 hover:bg-green-700 text-white">Transpor +1</Button>
             <Button onClick={() => onTranspose(-1)} className="bg-red-600 hover:bg-red-700 text-white">Transpor -1</Button>
             <Button onClick={onRestore} className="bg-blue-600 hover:bg-blue-700 text-white">Restaurar</Button>
-            <Button onClick={onSaveOutput} disabled={!outputText || outputText.trim() === ''} variant="outline">
-              <Save className="mr-2 h-4 w-4" /> Salvar
-            </Button>
             <Button
               variant="outline"
               className="ml-auto"
@@ -79,6 +82,21 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
             onChange={(e) => onOutputTextChange(e.target.value)}
             className="flex-1 min-h-[300px] lg:min-h-[600px] font-mono text-base resize-y bg-gray-50 dark:bg-gray-800"
           />
+          <div className="flex gap-2 mt-4 items-end"> {/* Adicionado mt-4 para espaçamento */}
+            <div className="flex-1">
+              <Label htmlFor="newSongTitle" className="sr-only">Título da Música</Label>
+              <Input
+                id="newSongTitle"
+                placeholder="Título da música"
+                value={newSongTitle}
+                onChange={(e) => onNewSongTitleChange(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <Button onClick={onSaveOutput} disabled={!outputText || outputText.trim() === '' || !newSongTitle.trim()}>
+              <Save className="mr-2 h-4 w-4" /> Salvar
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </>
