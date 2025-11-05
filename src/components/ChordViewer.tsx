@@ -109,7 +109,6 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
 
     const currentTransposedContent = getViewerContent();
     await onSaveTransposition(currentSong.id, currentTransposedContent);
-    // Removido: setViewerTransposeDelta(0); - Agora o useEffect fará isso quando currentSong for atualizado
     toast.success("Transposição salva com sucesso!");
   };
 
@@ -119,9 +118,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
       return;
     }
     await onSaveTransposition(currentSong.id, editedContent);
-    // Removido: setIsEditing(false);
-    // Removido: setEditedContent('');
-    // Removido: setViewerTransposeDelta(0); - Agora o useEffect fará isso quando currentSong for atualizado
+    // O useEffect que depende de currentSong/open irá resetar isEditing e editedContent
     toast.success("Edição salva com sucesso!");
   };
 
@@ -130,12 +127,11 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
       toast.info("Selecione uma música para editar.");
       return;
     }
+    // Ao entrar no modo de edição, inicializa com o conteúdo atual (que pode estar transposto)
     if (!isEditing) {
-      setEditedContent(getViewerContent()); 
-    } else {
-      setEditedContent('');
+      setEditedContent(getViewerContent());
     }
-    setIsEditing(prev => !prev);
+    setIsEditing(true); // Sempre define como true ao clicar em 'Editar'
   };
 
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -198,26 +194,45 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleToggleEdit} disabled={!currentSong}>
-                  <Edit className="mr-2 h-4 w-4" /> {isEditing ? 'Cancelar Edição' : 'Editar'}
+                {/* Botão "Editar" */}
+                <DropdownMenuItem
+                  onSelect={(e) => e.preventDefault()}
+                  onClick={handleToggleEdit}
+                  disabled={!currentSong || isEditing} // Desabilita se já estiver editando
+                >
+                  <Edit className="mr-2 h-4 w-4" /> Editar
                 </DropdownMenuItem>
-                {isEditing ? (
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleSaveEdit} disabled={!currentSong || !editedContent.trim()}>
+
+                {/* Botão "Salvar Edição" - visível apenas quando estiver editando */}
+                {isEditing && (
+                  <DropdownMenuItem
+                    onSelect={(e) => e.preventDefault()}
+                    onClick={handleSaveEdit}
+                    disabled={!currentSong || !editedContent.trim()}
+                  >
                     <Save className="mr-2 h-4 w-4" /> Salvar Edição
                   </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleInternalSaveTransposition} disabled={!currentSong || viewerTransposeDelta === 0}>
-                    <Save className="mr-2 h-4 w-4" /> Salvar Transposição
-                  </DropdownMenuItem>
                 )}
+
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setViewerTransposeDelta(prev => prev - 1)} disabled={!currentSong || isEditing}>
-                  Transpor -1
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setViewerTransposeDelta(prev => prev + 1)} disabled={!currentSong || isEditing}>
-                  Transpor +1
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
+
+                {/* Opções de transposição e salvar transposição - visíveis apenas quando NÃO estiver editando */}
+                {!isEditing && (
+                  <>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setViewerTransposeDelta(prev => prev - 1)} disabled={!currentSong}>
+                      Transpor -1
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setViewerTransposeDelta(prev => prev + 1)} disabled={!currentSong}>
+                      Transpor +1
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleInternalSaveTransposition} disabled={!currentSong || viewerTransposeDelta === 0}>
+                      <Save className="mr-2 h-4 w-4" /> Salvar Transposição
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+
+                {/* Opções de tamanho da fonte - sempre disponíveis */}
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setViewerFontSize(prev => Math.max(prev - 0.1, 0.8))} disabled={!currentSong}>
                   <ZoomOut className="mr-2 h-4 w-4" /> Diminuir Fonte
                 </DropdownMenuItem>
