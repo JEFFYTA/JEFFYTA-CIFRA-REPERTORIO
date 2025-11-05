@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { toast } from "sonner";
 import { extrairCifras, extractSongTitle } from "@/lib/chordUtils";
 import { supabase } from "@/integrations/supabase/client"; // Importar o cliente Supabase
-import { Song } from "@/types/song"; // Importar o tipo Song
+import { Song } => "@/types/song"; // Importar o tipo Song
 
 interface UseSongManagementProps {
   initialInputText?: string; // Tornar opcional
@@ -105,7 +105,6 @@ export const useSongManagement = ({ initialInputText = '' }: UseSongManagementPr
   };
 
   const handleSaveSong = async () => {
-    // Apenas outputText é estritamente necessário para salvar as cifras
     if (!outputText.trim()) {
       toast.error("Não há música para salvar. Por favor, cole o conteúdo primeiro.");
       return;
@@ -121,34 +120,68 @@ export const useSongManagement = ({ initialInputText = '' }: UseSongManagementPr
       return;
     }
 
-    const newSongData = {
-      user_id: user.user.id,
-      title: newSongTitle.trim(),
-      original_content: inputText, // Salva o inputText, mesmo que esteja vazio
-      extracted_chords: outputText,
-    };
+    // Determine if we are updating an existing song or creating a new one
+    const existingSongId = currentSongIndex !== null ? songs[currentSongIndex]?.id : null;
 
-    const { data, error } = await supabase
-      .from('songs')
-      .insert([newSongData])
-      .select();
+    if (existingSongId) {
+      // Update existing song
+      const { error } = await supabase
+        .from('songs')
+        .update({
+          title: newSongTitle.trim(),
+          original_content: inputText,
+          extracted_chords: outputText,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existingSongId)
+        .eq('user_id', user.user.id);
 
-    if (error) {
-      toast.error("Erro ao salvar música: " + error.message);
-      console.error("Erro ao salvar música:", error);
-    } else if (data && data.length > 0) {
-      // Mapear a música recém-criada para o formato do frontend
-      const createdSong = {
-        id: data[0].id,
-        user_id: data[0].user_id,
-        title: data[0].title,
-        originalContent: data[0].original_content,
-        extractedChords: data[0].extracted_chords,
-        created_at: data[0].created_at,
+      if (error) {
+        toast.error("Erro ao atualizar música: " + error.message);
+        console.error("Erro ao atualizar música:", error);
+      } else {
+        // Update local state
+        setSongs(prev => prev.map(song =>
+          song.id === existingSongId
+            ? { ...song, title: newSongTitle.trim(), originalContent: inputText, extractedChords: outputText }
+            : song
+        ));
+        toast.success(`Música "${newSongTitle}" atualizada com sucesso!`);
+      }
+    } else {
+      // Insert new song
+      const newSongData = {
+        user_id: user.user.id,
+        title: newSongTitle.trim(),
+        original_content: inputText,
+        extracted_chords: outputText,
       };
-      setSongs(prev => [...prev, createdSong]);
-      setNewSongTitle('');
-      toast.success(`Música "${createdSong.title}" salva com sucesso!`);
+
+      const { data, error } = await supabase
+        .from('songs')
+        .insert([newSongData])
+        .select();
+
+      if (error) {
+        toast.error("Erro ao salvar música: " + error.message);
+        console.error("Erro ao salvar música:", error);
+      } else if (data && data.length > 0) {
+        const createdSong = {
+          id: data[0].id,
+          user_id: data[0].user_id,
+          title: data[0].title,
+          originalContent: data[0].original_content,
+          extractedChords: data[0].extracted_chords,
+          created_at: data[0].created_at,
+        };
+        setSongs(prev => [...prev, createdSong]);
+        setNewSongTitle('');
+        setInputText(''); // Clear input after saving new song
+        setOutputText(''); // Clear output after saving new song
+        setOriginalOutputText(''); // Clear original output
+        setCurrentSongIndex(null); // No song is currently loaded
+        toast.success(`Música "${createdSong.title}" salva com sucesso!`);
+      }
     }
   };
 
