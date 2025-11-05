@@ -206,6 +206,7 @@ export const useSongManagement = ({ initialInputText = '' }: UseSongManagementPr
       console.error("Erro ao atualizar cifras da música:", error);
       // toast.error("Erro ao salvar alterações na música."); // Não exibir toast a cada keystroke
     } else {
+      // A atualização do estado local é importante para a reatividade imediata
       setSongs(prev => prev.map(song =>
         song.id === songId ? { ...song, extractedChords: newChords } : song
       ));
@@ -230,5 +231,6 @@ export const useSongManagement = ({ initialInputText = '' }: UseSongManagementPr
     handleDeleteSong,
     handleUpdateSongChords,
     loadingSongs,
+    fetchSongs, // Expondo fetchSongs
   };
 };

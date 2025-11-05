@@ -68,6 +68,7 @@ const ChordRecognizer = () => {
     handleDeleteSong,
     handleUpdateSongChords,
     loadingSongs,
+    fetchSongs, // Importando fetchSongs
   } = useSongManagement({
     initialInputText: ''
   });
@@ -377,10 +378,11 @@ const ChordRecognizer = () => {
             handleUpdateSongChords(currentViewerSong.id, newContent);
           }
         }}
-        onSaveTransposition={async (songId, newContent) => { // Tornando a função assíncrona
+        onSaveTransposition={async (songId, newContent) => {
           await handleUpdateSongChords(songId, newContent);
-          toast.success("Transposição salva com sucesso!");
+          // Não é necessário toast aqui, pois o ChordViewer já o faz.
         }}
+        onSongsRefetch={fetchSongs} // Passando fetchSongs
       />
     </div>
   );

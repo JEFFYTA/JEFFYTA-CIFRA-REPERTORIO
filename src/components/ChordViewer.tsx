@@ -28,7 +28,8 @@ interface ChordViewerProps {
   isRepertoireViewerActive: boolean;
   selectedRepertoireName: string | null;
   onContentChange: (newContent: string) => void;
-  onSaveTransposition: (songId: string, newContent: string) => Promise<void>; // Tipo atualizado para retornar Promise
+  onSaveTransposition: (songId: string, newContent: string) => Promise<void>;
+  onSongsRefetch: () => Promise<void>; // Nova prop para recarregar as músicas
 }
 
 const ChordViewer: React.FC<ChordViewerProps> = ({
@@ -47,6 +48,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
   selectedRepertoireName,
   onContentChange,
   onSaveTransposition,
+  onSongsRefetch, // Usando a nova prop
 }) => {
   const [viewerTransposeDelta, setViewerTransposeDelta] = useState<number>(0);
   const [viewerFontSize, setViewerFontSize] = useState<number>(1.2);
@@ -55,7 +57,6 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
   const [editedContent, setEditedContent] = useState<string>('');
 
   useEffect(() => {
-    // Este useEffect é o único responsável por resetar os estados quando a música atual muda ou o visualizador é aberto/fechado.
     setViewerTransposeDelta(0);
     setViewerFontSize(1.2);
     setShowSearchResults(false);
@@ -109,6 +110,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
 
     const currentTransposedContent = getViewerContent();
     await onSaveTransposition(currentSong.id, currentTransposedContent);
+    await onSongsRefetch(); // Recarrega as músicas após salvar a transposição
     toast.success("Transposição salva com sucesso!");
   };
 
@@ -118,7 +120,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
       return;
     }
     await onSaveTransposition(currentSong.id, editedContent);
-    // O useEffect que depende de currentSong/open irá resetar isEditing e editedContent
+    await onSongsRefetch(); // Recarrega as músicas após salvar a edição
     toast.success("Edição salva com sucesso!");
   };
 
@@ -127,11 +129,10 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
       toast.info("Selecione uma música para editar.");
       return;
     }
-    // Ao entrar no modo de edição, inicializa com o conteúdo atual (que pode estar transposto)
     if (!isEditing) {
       setEditedContent(getViewerContent());
     }
-    setIsEditing(true); // Sempre define como true ao clicar em 'Editar'
+    setIsEditing(true);
   };
 
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
