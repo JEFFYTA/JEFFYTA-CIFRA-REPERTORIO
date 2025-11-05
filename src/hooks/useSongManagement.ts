@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { toast } from "sonner";
 import { extrairCifras, extractSongTitle } from "@/lib/chordUtils";
 import { supabase } from "@/integrations/supabase/client"; // Importar o cliente Supabase
-import { Song } => "@/types/song"; // Importar o tipo Song
+import { Song } from "@/types/song"; // Importar o tipo Song
 
 interface UseSongManagementProps {
   initialInputText?: string; // Tornar opcional
