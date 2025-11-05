@@ -190,7 +190,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
             )}
 
             {/* Dropdown Menu for other actions */}
-            <DropdownMenu>
+            <DropdownMenu modal={false}> {/* Adicionado modal={false} aqui */}
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="p-2">
                   <EllipsisVertical className="h-4 w-4" />
