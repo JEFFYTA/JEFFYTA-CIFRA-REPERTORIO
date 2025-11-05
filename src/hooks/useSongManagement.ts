@@ -72,15 +72,28 @@ export const useSongManagement = ({ initialInputText = '' }: UseSongManagementPr
   }, []);
 
   useEffect(() => {
+    // Este efeito processa inputText em outputText
     processInput(inputText);
-    const detectedTitle = extractSongTitle(inputText);
+  }, [inputText, processInput]);
+
+  useEffect(() => {
+    // Este efeito extrai o título
+    let detectedTitle = '';
+    if (inputText.trim()) {
+      // Se houver texto de entrada, priorize a extração do título a partir dele
+      detectedTitle = extractSongTitle(inputText);
+    } else if (outputText.trim()) {
+      // Se o texto de entrada estiver vazio, mas o texto de saída tiver conteúdo (ex: colagem direta),
+      // tente extrair o título do texto de saída.
+      detectedTitle = extractSongTitle(outputText);
+    }
+
     if (detectedTitle) {
       setNewSongTitle(detectedTitle);
     } else {
       setNewSongTitle('');
     }
-    // onInputTextChange(inputText); // Removido
-  }, [inputText, processInput]); // Removido onInputTextChange da dependência
+  }, [inputText, outputText]); // Depende de inputText e outputText
 
   const handleClear = () => {
     setInputText('');
