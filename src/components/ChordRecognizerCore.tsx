@@ -10,7 +10,7 @@ interface ChordRecognizerCoreProps {
   inputText: string;
   onInputTextChange: (text: string) => void;
   outputText: string;
-  onOutputTextChange: (text: string) => void; // Novo prop para mudanças no outputText
+  onOutputTextChange: (text: string) => void; // Prop para mudanças no outputText
   onTranspose: (delta: number) => void;
   onRestore: () => void;
   onClear: () => void;
@@ -23,7 +23,7 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
   inputText,
   onInputTextChange,
   outputText,
-  onOutputTextChange, // Usar o novo prop
+  onOutputTextChange, // Usar o prop
   onTranspose,
   onRestore,
   onClear,
@@ -76,7 +76,7 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
           <Textarea
             id="output"
             value={outputText}
-            onChange={(e) => onOutputTextChange(e.target.value)} {/* Removido readOnly */}
+            onChange={(e) => onOutputTextChange(e.target.value)}
             className="flex-1 min-h-[300px] lg:min-h-[600px] font-mono text-base resize-y bg-gray-50 dark:bg-gray-800"
           />
         </CardContent>
