@@ -14,8 +14,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       dyadComponentTagger(),
       react({
-        // Removendo a configuração explícita de 'jsx' aqui, pois já está definida em tsconfig.json
-        // O plugin SWC deve ler a configuração de 'jsx' do tsconfig.json por padrão.
+        jsx: 'react-jsx', // Adicionado: Força o plugin SWC a usar o transformador react-jsx
       }),
     ],
     resolve: {
