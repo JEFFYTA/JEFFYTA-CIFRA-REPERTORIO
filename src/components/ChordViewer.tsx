@@ -55,6 +55,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
   const [editedContent, setEditedContent] = useState<string>('');
 
   useEffect(() => {
+    // Este useEffect é o único responsável por resetar os estados quando a música atual muda ou o visualizador é aberto/fechado.
     setViewerTransposeDelta(0);
     setViewerFontSize(1.2);
     setShowSearchResults(false);
@@ -100,27 +101,27 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
     return currentSong.title;
   };
 
-  const handleInternalSaveTransposition = async () => { // Tornando a função assíncrona
+  const handleInternalSaveTransposition = async () => {
     if (!currentSong || viewerTransposeDelta === 0) {
       toast.info("Nenhuma transposição para salvar ou nenhuma música selecionada.");
       return;
     }
 
     const currentTransposedContent = getViewerContent();
-    await onSaveTransposition(currentSong.id, currentTransposedContent); // Aguardando a conclusão
-    setViewerTransposeDelta(0);
+    await onSaveTransposition(currentSong.id, currentTransposedContent);
+    // Removido: setViewerTransposeDelta(0); - Agora o useEffect fará isso quando currentSong for atualizado
     toast.success("Transposição salva com sucesso!");
   };
 
-  const handleSaveEdit = async () => { // Tornando a função assíncrona
+  const handleSaveEdit = async () => {
     if (!currentSong || !editedContent.trim()) {
       toast.error("Não há conteúdo para salvar.");
       return;
     }
-    await onSaveTransposition(currentSong.id, editedContent); // Aguardando a conclusão
-    setIsEditing(false);
-    setEditedContent('');
-    setViewerTransposeDelta(0);
+    await onSaveTransposition(currentSong.id, editedContent);
+    // Removido: setIsEditing(false);
+    // Removido: setEditedContent('');
+    // Removido: setViewerTransposeDelta(0); - Agora o useEffect fará isso quando currentSong for atualizado
     toast.success("Edição salva com sucesso!");
   };
 
@@ -130,7 +131,6 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
       return;
     }
     if (!isEditing) {
-      // Ao entrar no modo de edição, inicializa com o conteúdo atual (que pode estar transposto)
       setEditedContent(getViewerContent()); 
     } else {
       setEditedContent('');
