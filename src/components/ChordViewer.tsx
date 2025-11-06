@@ -55,13 +55,24 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
   const [showSearchResults, setShowSearchResults] = useState<boolean>(false);
   const [localEditedContent, setLocalEditedContent] = useState<string>(''); // Novo estado para edições locais
 
+  // Efeito para redefinir configurações do visualizador quando ele abre/fecha
   useEffect(() => {
+    console.log("ChordViewer: Redefinindo configurações do visualizador (transposição, tamanho da fonte, visibilidade dos resultados da busca).");
     setViewerTransposeDelta(0);
     setViewerFontSize(1.2);
     setShowSearchResults(false);
-    // Inicializa localEditedContent com as cifras extraídas da música atual
-    setLocalEditedContent(currentSong?.extractedChords || '');
-  }, [currentSong, open]);
+  }, [open]);
+
+  // Efeito para inicializar localEditedContent quando uma NOVA música é carregada ou o visualizador abre
+  // Isso NÃO deve ser executado quando a *mesma* música é apenas recarregada após uma edição.
+  useEffect(() => {
+    console.log("ChordViewer: Inicializando localEditedContent para currentSong.id:", currentSong?.id);
+    if (currentSong) {
+      setLocalEditedContent(currentSong.extractedChords || '');
+    } else {
+      setLocalEditedContent('');
+    }
+  }, [currentSong?.id, open]); // Depende de currentSong.id para garantir que só reinicie para uma *nova* música
 
   // Função para obter o conteúdo para exibição, aplicando transposição ao localEditedContent
   const getDisplayedContent = useCallback(() => {
@@ -108,8 +119,12 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
       return;
     }
     console.log("ChordViewer: Tentando salvar conteúdo editado diretamente para a música ID:", currentSong.id, "Conteúdo:", localEditedContent);
-    await onSaveTransposition(currentSong.id, localEditedContent);
+    const savedContent = localEditedContent; // Captura o conteúdo a ser salvo
+    await onSaveTransposition(currentSong.id, savedContent);
     await onSongsRefetch(); // Recarrega as músicas após salvar a edição
+    // Após salvar e recarregar, garante que o estado local reflita o conteúdo salvo
+    // Isso é crucial para evitar o retorno a um estado antigo se a atualização da prop currentSong for atrasada.
+    setLocalEditedContent(savedContent); // Atualiza explicitamente o estado local com o que acabou de ser salvo
     toast.success("Edição salva com sucesso!");
   };
 
@@ -120,8 +135,13 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
     }
 
     const currentTransposedContent = getDisplayedContent(); // Este já tem a transposição aplicada
+    console.log("ChordViewer: Tentando salvar conteúdo transposto para a música ID:", currentSong.id, "Conteúdo:", currentTransposedContent);
     await onSaveTransposition(currentSong.id, currentTransposedContent);
     await onSongsRefetch(); // Recarrega as músicas após salvar a transposição
+    // Redefine o delta de transposição após salvar o conteúdo transposto
+    setViewerTransposeDelta(0);
+    // Atualiza localEditedContent para refletir o conteúdo recém-salvo (transposto)
+    setLocalEditedContent(currentTransposedContent);
     toast.success("Transposição salva com sucesso!");
   };
 
