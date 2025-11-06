@@ -238,12 +238,10 @@ export const useSongManagement = ({ initialInputText = '' }: UseSongManagementPr
     if (error) {
       console.error("Erro ao atualizar cifras da música:", error);
       toast.error("Erro ao salvar alterações na música: " + error.message); // Exibir toast de erro
-    } else {
-      // A atualização do estado local é importante para a reatividade imediata
-      setSongs(prev => prev.map(song =>
-        song.id === songId ? { ...song, extractedChords: newChords } : song
-      ));
+      return; // Retornar em caso de erro para não prosseguir como se tivesse sucesso
     }
+    // Removido o setSongs local aqui.
+    // A atualização do estado será feita pelo fetchSongs que é chamado em ChordViewer.tsx
   };
 
   return {

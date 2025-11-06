@@ -57,6 +57,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
   const [editedContent, setEditedContent] = useState<string>('');
 
   useEffect(() => {
+    console.log("ChordViewer: currentSong prop changed or viewer opened/closed. Resetting state.");
     setViewerTransposeDelta(0);
     setViewerFontSize(1.2);
     setShowSearchResults(false);
@@ -119,6 +120,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
       toast.error("Não há conteúdo para salvar.");
       return;
     }
+    console.log("ChordViewer: Attempting to save edited content for song ID:", currentSong.id, "Content:", editedContent);
     await onSaveTransposition(currentSong.id, editedContent);
     await onSongsRefetch(); // Recarrega as músicas após salvar a edição
     toast.success("Edição salva com sucesso!");
