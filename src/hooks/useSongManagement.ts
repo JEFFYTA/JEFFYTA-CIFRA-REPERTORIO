@@ -46,6 +46,7 @@ export const useSongManagement = ({ initialInputText = '' }: UseSongManagementPr
         originalContent: song.original_content,
         extractedChords: song.extracted_chords,
         created_at: song.created_at,
+        updated_at: song.updated_at, // Adicionado: Mapear a nova coluna
       }));
       setSongs(mappedSongs);
     }
@@ -131,7 +132,7 @@ export const useSongManagement = ({ initialInputText = '' }: UseSongManagementPr
           title: newSongTitle.trim(),
           original_content: inputText,
           extracted_chords: outputText,
-          updated_at: new Date().toISOString(),
+          // updated_at é atualizado automaticamente pelo trigger
         })
         .eq('id', existingSongId)
         .eq('user_id', user.user.id);
@@ -173,6 +174,7 @@ export const useSongManagement = ({ initialInputText = '' }: UseSongManagementPr
           originalContent: data[0].original_content,
           extractedChords: data[0].extracted_chords,
           created_at: data[0].created_at,
+          updated_at: data[0].updated_at, // Adicionado: Mapear a nova coluna
         };
         setSongs(prev => [...prev, createdSong]);
         setNewSongTitle('');
@@ -231,7 +233,7 @@ export const useSongManagement = ({ initialInputText = '' }: UseSongManagementPr
 
     const { error } = await supabase
       .from('songs')
-      .update({ extracted_chords: newChords, updated_at: new Date().toISOString() })
+      .update({ extracted_chords: newChords }) // updated_at é atualizado automaticamente pelo trigger
       .eq('id', songId)
       .eq('user_id', user.user.id);
 

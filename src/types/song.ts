@@ -5,4 +5,5 @@ export interface Song {
   originalContent: string;
   extractedChords: string;
   created_at: string; // Adicionado para ordenação e persistência
+  updated_at: string; // Adicionado para timestamp de atualização
 }
