@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { ChevronLeft, ChevronRight, Save, X, Search, ZoomIn, ZoomOut, Edit, EllipsisVertical } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save, X, Search, ZoomIn, ZoomOut, EllipsisVertical } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Song } from "@/types/song";
 import { transposeChordLine } from "@/lib/chordUtils";
@@ -29,7 +29,7 @@ interface ChordViewerProps {
   selectedRepertoireName: string | null;
   onContentChange: (newContent: string) => void;
   onSaveTransposition: (songId: string, newContent: string) => Promise<void>;
-  onSongsRefetch: () => Promise<void>; // Nova prop para recarregar as músicas
+  onSongsRefetch: () => Promise<void>;
 }
 
 const ChordViewer: React.FC<ChordViewerProps> = ({
@@ -48,24 +48,23 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
   selectedRepertoireName,
   onContentChange,
   onSaveTransposition,
-  onSongsRefetch, // Usando a nova prop
+  onSongsRefetch,
 }) => {
   const [viewerTransposeDelta, setViewerTransposeDelta] = useState<number>(0);
   const [viewerFontSize, setViewerFontSize] = useState<number>(1.2);
   const [showSearchResults, setShowSearchResults] = useState<boolean>(false);
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [editedContent, setEditedContent] = useState<string>('');
+  const [localEditedContent, setLocalEditedContent] = useState<string>(''); // Novo estado para edições locais
 
   useEffect(() => {
-    console.log("ChordViewer: currentSong prop changed or viewer opened/closed. Resetting state.");
     setViewerTransposeDelta(0);
     setViewerFontSize(1.2);
     setShowSearchResults(false);
-    setIsEditing(false); // Garante que o modo de edição é desativado ao mudar de música ou fechar
-    setEditedContent('');
+    // Inicializa localEditedContent com as cifras extraídas da música atual
+    setLocalEditedContent(currentSong?.extractedChords || '');
   }, [currentSong, open]);
 
-  const getViewerContent = useCallback(() => {
+  // Função para obter o conteúdo para exibição, aplicando transposição ao localEditedContent
+  const getDisplayedContent = useCallback(() => {
     if (!currentSong) {
       if (!isRepertoireViewerActive && searchTerm.trim() !== '' && searchResults.length === 0) {
         return "Nenhuma música encontrada com este termo.";
@@ -79,15 +78,15 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
       return '';
     }
 
-    let contentToDisplay = currentSong.extractedChords;
-
-    if (contentToDisplay) {
-      let lines = contentToDisplay.split('\n');
-      lines = lines.map(line => transposeChordLine(line, viewerTransposeDelta));
-      return lines.join('\n');
+    // Aplica transposição ao conteúdo editado localmente
+    if (localEditedContent) {
+      const lines = localEditedContent.split('\n');
+      const transposedLines = lines.map(line => transposeChordLine(line, viewerTransposeDelta));
+      return transposedLines.join('\n');
     }
     return '';
-  }, [currentSong, viewerTransposeDelta, isRepertoireViewerActive, searchTerm, searchResults, viewerNavigableSongs]);
+  }, [currentSong, viewerTransposeDelta, localEditedContent, isRepertoireViewerActive, searchTerm, searchResults, viewerNavigableSongs]);
+
 
   const getViewerTitle = () => {
     if (!currentSong) {
@@ -103,39 +102,27 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
     return currentSong.title;
   };
 
-  const handleInternalSaveTransposition = async () => {
+  const handleSaveDirectEdit = async () => {
+    if (!currentSong || !localEditedContent.trim()) {
+      toast.error("Não há conteúdo para salvar.");
+      return;
+    }
+    console.log("ChordViewer: Tentando salvar conteúdo editado diretamente para a música ID:", currentSong.id, "Conteúdo:", localEditedContent);
+    await onSaveTransposition(currentSong.id, localEditedContent);
+    await onSongsRefetch(); // Recarrega as músicas após salvar a edição
+    toast.success("Edição salva com sucesso!");
+  };
+
+  const handleSaveTransposedContent = async () => {
     if (!currentSong || viewerTransposeDelta === 0) {
       toast.info("Nenhuma transposição para salvar ou nenhuma música selecionada.");
       return;
     }
 
-    const currentTransposedContent = getViewerContent();
+    const currentTransposedContent = getDisplayedContent(); // Este já tem a transposição aplicada
     await onSaveTransposition(currentSong.id, currentTransposedContent);
     await onSongsRefetch(); // Recarrega as músicas após salvar a transposição
     toast.success("Transposição salva com sucesso!");
-  };
-
-  const handleSaveEdit = async () => {
-    if (!currentSong || !editedContent.trim()) {
-      toast.error("Não há conteúdo para salvar.");
-      return;
-    }
-    console.log("ChordViewer: Attempting to save edited content for song ID:", currentSong.id, "Content:", editedContent);
-    await onSaveTransposition(currentSong.id, editedContent);
-    await onSongsRefetch(); // Recarrega as músicas após salvar a edição
-    toast.success("Edição salva com sucesso!");
-    setIsEditing(false); // Sair do modo de edição após salvar
-  };
-
-  const handleToggleEdit = () => {
-    if (!currentSong) {
-      toast.info("Selecione uma música para editar.");
-      return;
-    }
-    if (!isEditing) {
-      setEditedContent(getViewerContent());
-    }
-    setIsEditing(true);
   };
 
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -147,17 +134,16 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-full h-screen flex flex-col p-0 sm:max-w-[90vw] sm:h-[90vh]">
         <DialogHeader className="p-4 border-b dark:border-gray-700 grid grid-cols-[auto_1fr_auto] items-center gap-2">
-          {/* Left side: Search input (conditional), Dropdown, Close button */}
+          {/* Lado esquerdo: Input de busca (condicional), Dropdown, Botão de fechar */}
           <div className="flex items-center gap-2 relative z-40">
             {!isRepertoireViewerActive && (
-              <div className="relative w-48"> {/* Fixed width for search input */}
+              <div className="relative w-48"> {/* Largura fixa para o input de busca */}
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400 z-10" />
                 <Input
                   placeholder="Buscar..."
                   value={searchTerm}
                   onChange={handleSearchInputChange}
                   className="pl-9 w-full relative z-20"
-                  disabled={isEditing}
                   onFocus={() => setShowSearchResults(true)}
                   onBlur={() => setTimeout(() => setShowSearchResults(false), 100)}
                 />
@@ -190,7 +176,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
               </div>
             )}
 
-            {/* Dropdown Menu for other actions */}
+            {/* Menu Dropdown para outras ações */}
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="p-2">
@@ -198,43 +184,17 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
-                {/* Botão "Editar" */}
-                <DropdownMenuItem
-                  onSelect={(e) => e.preventDefault()}
-                  onClick={handleToggleEdit}
-                  disabled={!currentSong || isEditing} // Desabilita se já estiver editando
-                >
-                  <Edit className="mr-2 h-4 w-4" /> Editar
+                {/* Opções de transposição e salvar transposição */}
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setViewerTransposeDelta(prev => prev - 1)} disabled={!currentSong}>
+                  Transpor -1
                 </DropdownMenuItem>
-
-                {/* Botão "Salvar Edição" - visível apenas quando estiver editando */}
-                {isEditing && (
-                  <DropdownMenuItem
-                    onSelect={(e) => e.preventDefault()}
-                    onClick={handleSaveEdit}
-                    disabled={!currentSong || !editedContent.trim()}
-                  >
-                    <Save className="mr-2 h-4 w-4" /> Salvar Edição
-                  </DropdownMenuItem>
-                )}
-
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setViewerTransposeDelta(prev => prev + 1)} disabled={!currentSong}>
+                  Transpor +1
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleSaveTransposedContent} disabled={!currentSong || viewerTransposeDelta === 0}>
+                  <Save className="mr-2 h-4 w-4" /> Salvar Transposição
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
-
-                {/* Opções de transposição e salvar transposição - visíveis apenas quando NÃO estiver editando */}
-                {!isEditing && (
-                  <>
-                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setViewerTransposeDelta(prev => prev - 1)} disabled={!currentSong}>
-                      Transpor -1
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setViewerTransposeDelta(prev => prev + 1)} disabled={!currentSong}>
-                      Transpor +1
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleInternalSaveTransposition} disabled={!currentSong || viewerTransposeDelta === 0}>
-                      <Save className="mr-2 h-4 w-4" /> Salvar Transposição
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                  </>
-                )}
 
                 {/* Opções de tamanho da fonte - sempre disponíveis */}
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setViewerFontSize(prev => Math.max(prev - 0.1, 0.8))} disabled={!currentSong}>
@@ -246,7 +206,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Close Button */}
+            {/* Botão de fechar */}
             <DialogClose asChild>
               <Button variant="ghost" size="sm" className="p-2">
                 <X className="h-4 w-4" />
@@ -254,30 +214,30 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
             </DialogClose>
           </div>
 
-          {/* Center: Title */}
+          {/* Centro: Título */}
           <DialogTitle className="text-xl text-center min-w-0 truncate">
             {getViewerTitle()}
           </DialogTitle>
 
-          {/* Right side: Empty placeholder to balance the left side. */}
+          {/* Lado direito: Placeholder vazio para equilibrar o lado esquerdo. */}
           <div></div>
         </DialogHeader>
 
         <div className="flex-1 p-4 overflow-auto font-mono leading-relaxed">
           <Textarea
-            value={isEditing ? editedContent : getViewerContent()}
-            readOnly={!isEditing}
-            onChange={(e) => setEditedContent(e.target.value)}
+            value={getDisplayedContent()} // Exibe o conteúdo local transposto
+            onChange={(e) => setLocalEditedContent(e.target.value)} // Atualiza o conteúdo local diretamente
+            onBlur={handleSaveDirectEdit} // Salva ao perder o foco
             className="w-full h-full resize-none border-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
             style={{ fontSize: `${viewerFontSize}rem` }}
-            disabled={!currentSong}
+            disabled={!currentSong} // Desabilita apenas se nenhuma música estiver carregada
           />
         </div>
 
         <div className="flex flex-wrap justify-center gap-2 p-4 border-t dark:border-gray-700">
           <Button
             onClick={onPreviousSong}
-            disabled={!currentSong || viewerNavigableSongs.length <= 1 || isEditing}
+            disabled={!currentSong || viewerNavigableSongs.length <= 1}
             variant="outline"
             size="sm"
           >
@@ -285,7 +245,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
           </Button>
           <Button
             onClick={onNextSong}
-            disabled={!currentSong || viewerNavigableSongs.length <= 1 || isEditing}
+            disabled={!currentSong || viewerNavigableSongs.length <= 1}
             variant="outline"
             size="sm"
           >
