@@ -60,7 +60,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
     setViewerTransposeDelta(0);
     setViewerFontSize(1.2);
     setShowSearchResults(false);
-    setIsEditing(false);
+    setIsEditing(false); // Garante que o modo de edição é desativado ao mudar de música ou fechar
     setEditedContent('');
   }, [currentSong, open]);
 
@@ -122,6 +122,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
     await onSaveTransposition(currentSong.id, editedContent);
     await onSongsRefetch(); // Recarrega as músicas após salvar a edição
     toast.success("Edição salva com sucesso!");
+    setIsEditing(false); // Sair do modo de edição após salvar
   };
 
   const handleToggleEdit = () => {

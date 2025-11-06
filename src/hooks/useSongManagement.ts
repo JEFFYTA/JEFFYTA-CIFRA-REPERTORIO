@@ -237,7 +237,7 @@ export const useSongManagement = ({ initialInputText = '' }: UseSongManagementPr
 
     if (error) {
       console.error("Erro ao atualizar cifras da música:", error);
-      // toast.error("Erro ao salvar alterações na música."); // Não exibir toast a cada keystroke
+      toast.error("Erro ao salvar alterações na música: " + error.message); // Exibir toast de erro
     } else {
       // A atualização do estado local é importante para a reatividade imediata
       setSongs(prev => prev.map(song =>
