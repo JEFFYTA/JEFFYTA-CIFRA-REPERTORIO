@@ -126,9 +126,14 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
     }
 
     console.log("ChordViewer: Tentando salvar conteúdo editado diretamente para a música ID:", currentSong.id, "Conteúdo:", localEditedContent);
-    await onSaveTransposition(currentSong.id, localEditedContent);
-    await onSongsRefetch(); // Recarrega as músicas após salvar a edição
-    toast.success("Edição salva com sucesso!");
+    try {
+      await onSaveTransposition(currentSong.id, localEditedContent);
+      await onSongsRefetch(); // Recarrega as músicas após salvar a edição
+      toast.success("Edição salva com sucesso!");
+    } catch (error) {
+      console.error("ChordViewer: Erro ao salvar edição direta:", error);
+      toast.error("Erro ao salvar edição: " + (error instanceof Error ? error.message : String(error)));
+    }
   };
 
   const handleSaveTransposedContent = async () => {
@@ -139,11 +144,16 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
 
     const currentTransposedContent = getDisplayedContent(); // Este já tem a transposição aplicada
     console.log("ChordViewer: Tentando salvar conteúdo transposto para a música ID:", currentSong.id, "Conteúdo:", currentTransposedContent);
-    await onSaveTransposition(currentSong.id, currentTransposedContent);
-    await onSongsRefetch(); // Recarrega as músicas após salvar a transposição
-    // Redefine o delta de transposição após salvar o conteúdo transposto
-    setViewerTransposeDelta(0);
-    toast.success("Transposição salva com sucesso!");
+    try {
+      await onSaveTransposition(currentSong.id, currentTransposedContent);
+      await onSongsRefetch(); // Recarrega as músicas após salvar a transposição
+      // Redefine o delta de transposição após salvar o conteúdo transposto
+      setViewerTransposeDelta(0);
+      toast.success("Transposição salva com sucesso!");
+    } catch (error) {
+      console.error("ChordViewer: Erro ao salvar transposição:", error);
+      toast.error("Erro ao salvar transposição: " + (error instanceof Error ? error.message : String(error)));
+    }
   };
 
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
