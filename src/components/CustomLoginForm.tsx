@@ -78,11 +78,11 @@ const CustomLoginForm: React.FC<CustomLoginFormProps> = ({ onSignIn }) => {
 
   return (
     <Card className="w-full max-w-md p-6 shadow-lg">
-      <CardHeader className="flex flex-col items-center"> {/* Adicionado flex-col e items-center */}
+      <CardHeader className="flex flex-col items-center">
         <img 
-          src="/butterfly-logo.png" // Caminho para a imagem na pasta public
+          src="/butterfly-logo.jpg" // Caminho atualizado para .jpg
           alt="Logo Borboleta" 
-          className="w-24 h-24 object-contain mb-4" // Ajuste o tamanho conforme necessário
+          className="w-24 h-24 object-contain mb-4"
         />
         <CardTitle className="text-3xl font-bold text-center mb-6">Bem-vindo ao Cifra Fácil!</CardTitle>
       </CardHeader>
