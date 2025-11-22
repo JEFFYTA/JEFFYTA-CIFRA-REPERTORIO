@@ -50,7 +50,11 @@ const App = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
       <header className="w-full p-4 bg-white dark:bg-gray-800 shadow-md flex items-center justify-center lg:justify-start">
-        <Sparkles className="h-8 w-8 text-purple-600 mr-2" />
+        <img 
+          src="/butterfly-logo.jpg" // Adicionado o logo da borboleta aqui
+          alt="Logo Borboleta" 
+          className="w-8 h-8 object-contain mr-2" // Ajuste o tamanho conforme necessário
+        />
         <h1 className="text-2xl font-bold text-purple-600">CIFRA-REPERTORIO</h1>
       </header>
       <main className="flex-1 flex flex-col">
