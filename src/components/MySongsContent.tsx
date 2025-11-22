@@ -101,15 +101,7 @@ const MySongsContent: React.FC<MySongsContentProps> = ({
                     >
                       <Play className="h-4 w-4" />
                     </Button>
-                    <Button
-                      onClick={() => handleLoadSong(song.id)}
-                      variant="ghost"
-                      size="sm"
-                      className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
-                      title="Carregar para edição"
-                    >
-                      Carregar
-                    </Button>
+                    {/* Botão "Carregar" removido */}
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
