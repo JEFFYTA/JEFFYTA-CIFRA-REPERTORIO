@@ -1,0 +1,173 @@
+"use client";
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
+import { X } from 'lucide-react';
+import { useRepertoireManagement } from "@/hooks/useRepertoireManagement";
+import { useSongManagement } from "@/hooks/useSongManagement"; // Para obter os dados das músicas
+import MyRepertoiresContent from "@/components/MyRepertoiresContent"; // Conteúdo refatorado
+import ChordViewer from "@/components/ChordViewer";
+import { Song } from "@/types/song";
+import { toast } from "sonner";
+import { useNavigate } from 'react-router-dom'; // Importar useNavigate
+
+const RepertoiresPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [isViewerOpen, setIsViewerOpen] = useState<boolean>(false);
+  const [activeViewerSongId, setActiveViewerSongId] = useState<string | null>(null);
+  const [viewerNavigableSongs, setViewerNavigableSongs] = useState<Song[]>([]);
+  const [currentViewerSongIndex, setCurrentViewerSongIndex] = useState<number>(0);
+  const [viewerSearchTerm, setViewerSearchTerm] = useState<string>('');
+
+  const {
+    songs,
+    fetchSongs,
+    handleUpdateSongChords,
+  } = useSongManagement();
+
+  const {
+    repertoires,
+    selectedRepertoireId,
+    setSelectedRepertoireId,
+    newRepertoireName,
+    setNewRepertoireName,
+    selectedRepertoire,
+    handleCreateRepertoire,
+    handleSelectRepertoire,
+    handleDeleteRepertoire,
+    loadingRepertoires,
+  } = useRepertoireManagement({ songs });
+
+  // Função para abrir o ChordViewer com as músicas do repertório selecionado
+  const handleOpenRepertoireViewer = useCallback(() => {
+    if (!selectedRepertoireId) {
+      toast.error("Nenhum repertório selecionado.");
+      return;
+    }
+    const rep = repertoires.find(r => r.id === selectedRepertoireId);
+    if (!rep || rep.songIds.length === 0) {
+      toast.error("O repertório selecionado não possui músicas.");
+      return;
+    }
+
+    const repertoireSongs = rep.songIds
+      .map(id => songs.find(s => s.id === id))
+      .filter((s): s is Song => s !== undefined)
+      .sort((a, b) => a.title.localeCompare(b.title));
+
+    setViewerNavigableSongs(repertoireSongs);
+    setViewerSearchTerm(''); // Limpa a busca para a visualização do repertório
+
+    if (repertoireSongs.length > 0) {
+      setActiveViewerSongId(repertoireSongs[0].id);
+      setCurrentViewerSongIndex(0);
+    } else {
+      setActiveViewerSongId(null);
+      setCurrentViewerSongIndex(0);
+    }
+
+    setIsViewerOpen(true);
+    toast.info(`Abrindo repertório "${rep.name}" em tela cheia.`);
+  }, [selectedRepertoireId, repertoires, songs]);
+
+  // Lógica para navegação no viewer
+  const handleNextViewerSong = () => {
+    if (!activeViewerSongId || viewerNavigableSongs.length === 0) return;
+    const nextIndex = (currentViewerSongIndex + 1) % viewerNavigableSongs.length;
+    const nextSong = viewerNavigableSongs[nextIndex];
+    setActiveViewerSongId(nextSong.id);
+    setCurrentViewerSongIndex(nextIndex);
+  };
+
+  const handlePreviousViewerSong = () => {
+    if (!activeViewerSongId || viewerNavigableSongs.length === 0) return;
+    const prevIndex = (currentViewerSongIndex - 1 + viewerNavigableSongs.length) % viewerNavigableSongs.length;
+    const prevSong = viewerNavigableSongs[prevIndex];
+    setActiveViewerSongId(prevSong.id);
+    setCurrentViewerSongIndex(prevIndex);
+  };
+
+  const handleSelectViewerSong = (songId: string) => {
+    setActiveViewerSongId(songId);
+    const index = viewerNavigableSongs.findIndex(s => s.id === songId);
+    if (index !== -1) {
+      setCurrentViewerSongIndex(index);
+    }
+  };
+
+  const currentViewerSong = activeViewerSongId
+    ? viewerNavigableSongs.find(s => s.id === activeViewerSongId)
+    : null;
+
+  // Efeito para atualizar a lista de músicas navegáveis quando o repertório selecionado ou as músicas mudam
+  useEffect(() => {
+    if (isViewerOpen && selectedRepertoire) {
+      const repertoireSongs = selectedRepertoire.songIds
+        .map(id => songs.find(s => s.id === id))
+        .filter((s): s is Song => s !== undefined)
+        .sort((a, b) => a.title.localeCompare(b.title));
+      setViewerNavigableSongs(repertoireSongs);
+
+      if (activeViewerSongId && !repertoireSongs.some(s => s.id === activeViewerSongId)) {
+        setActiveViewerSongId(repertoireSongs.length > 0 ? repertoireSongs[0].id : null);
+        setCurrentViewerSongIndex(0);
+      } else if (activeViewerSongId) {
+        setCurrentViewerSongIndex(repertoireSongs.findIndex(s => s.id === activeViewerSongId));
+      }
+    }
+  }, [selectedRepertoire, songs, isViewerOpen, activeViewerSongId]);
+
+  return (
+    <Sheet open={true} onOpenChange={() => navigate('/')}> {/* Sempre aberta, fecha navegando para home */}
+      <SheetContent side="right" className="w-full max-w-full sm:max-w-md flex flex-col">
+        <SheetHeader className="flex flex-row items-center justify-between p-4 border-b dark:border-gray-700">
+          <SheetTitle className="text-2xl text-center flex-1">Meus Repertórios</SheetTitle>
+          <SheetClose asChild>
+            <Button variant="ghost" size="sm" className="p-2">
+              <X className="h-4 w-4" />
+            </Button>
+          </SheetClose>
+        </SheetHeader>
+        <MyRepertoiresContent
+          repertoires={repertoires}
+          selectedRepertoireId={selectedRepertoireId}
+          setSelectedRepertoireId={setSelectedRepertoireId}
+          newRepertoireName={newRepertoireName}
+          setNewRepertoireName={setNewRepertoireName}
+          handleCreateRepertoire={handleCreateRepertoire}
+          handleSelectRepertoire={handleSelectRepertoire}
+          handleDeleteRepertoire={handleDeleteRepertoire}
+          handleOpenRepertoireViewer={handleOpenRepertoireViewer}
+        />
+      </SheetContent>
+
+      <ChordViewer
+        open={isViewerOpen}
+        onOpenChange={setIsViewerOpen}
+        currentSong={currentViewerSong}
+        viewerNavigableSongs={viewerNavigableSongs}
+        currentViewerSongIndex={currentViewerSongIndex}
+        onNextSong={handleNextViewerSong}
+        onPreviousSong={handlePreviousViewerSong}
+        onSearchTermChange={setViewerSearchTerm}
+        searchTerm={viewerSearchTerm}
+        searchResults={viewerNavigableSongs.filter(s => s.id !== activeViewerSongId)}
+        onSelectViewerSong={handleSelectViewerSong}
+        isRepertoireViewerActive={true} // É visualizador de repertório aqui
+        selectedRepertoireName={selectedRepertoire?.name || null}
+        onContentChange={(newContent) => {
+          if (currentViewerSong) {
+            handleUpdateSongChords(currentViewerSong.id, newContent);
+          }
+        }}
+        onSaveTransposition={async (songId, newContent) => {
+          await handleUpdateSongChords(songId, newContent);
+        }}
+        onSongsRefetch={fetchSongs}
+      />
+    </Sheet>
+  );
+};
+
+export default RepertoiresPage;
