@@ -24,9 +24,9 @@ const HomePage: React.FC = () => {
                     bg-gradient-to-br from-purple-50 to-blue-50
                     dark:from-gray-900 dark:to-gray-950">
       <div className="text-center mb-8">
-        <h2 className="text-4xl font-extrabold text-gray-800 dark:text-gray-100 mb-2">
+        {/* <h2 className="text-4xl font-extrabold text-gray-800 dark:text-gray-100 mb-2">
           Olá! O que vamos tocar hoje?
-        </h2>
+        </h2> */}
         <p className="text-lg text-gray-600 dark:text-gray-300">
           Escolha uma opção para começar a gerenciar suas cifras e repertórios.
         </p>
