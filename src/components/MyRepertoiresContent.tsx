@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { PlusCircle, Trash2, Play } from 'lucide-react';
+import { PlusCircle, Trash2, Play, LibraryBig } from 'lucide-react'; // Adicionado LibraryBig
 import { cn } from "@/lib/utils";
 import { Repertoire } from "@/types/repertoire";
 
@@ -29,6 +29,7 @@ interface MyRepertoiresContentProps {
   handleSelectRepertoire: (id: string | null) => void;
   handleDeleteRepertoire: (id: string) => void;
   handleOpenRepertoireViewer: () => void;
+  onOpenSongSelectionSidebar: () => void; // Nova prop
 }
 
 const MyRepertoiresContent: React.FC<MyRepertoiresContentProps> = ({
@@ -41,6 +42,7 @@ const MyRepertoiresContent: React.FC<MyRepertoiresContentProps> = ({
   handleSelectRepertoire,
   handleDeleteRepertoire,
   handleOpenRepertoireViewer,
+  onOpenSongSelectionSidebar, // Usar a nova prop
 }) => {
   return (
     <div className="flex flex-col flex-1 p-4">
@@ -115,6 +117,14 @@ const MyRepertoiresContent: React.FC<MyRepertoiresContentProps> = ({
                   size="sm"
                 >
                   Desselecionar Repertório
+                </Button>
+                <Button
+                  onClick={onOpenSongSelectionSidebar} // Novo botão para abrir o sidebar de seleção de músicas
+                  disabled={!selectedRepertoireId}
+                  className="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white"
+                  size="sm"
+                >
+                  <LibraryBig className="mr-2 h-4 w-4" /> Adicionar/Remover Músicas
                 </Button>
                 <Button
                   onClick={handleOpenRepertoireViewer}

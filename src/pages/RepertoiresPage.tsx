@@ -3,11 +3,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
-import { X, ArrowLeft } from 'lucide-react'; // Importar ArrowLeft
+import { X, ArrowLeft } from 'lucide-react';
 import { useRepertoireManagement } from "@/hooks/useRepertoireManagement";
 import { useSongManagement } from "@/hooks/useSongManagement";
 import MyRepertoiresContent from "@/components/MyRepertoiresContent";
 import ChordViewer from "@/components/ChordViewer";
+import RepertoireSongSelectionSidebar from "@/components/RepertoireSongSelectionSidebar"; // Importar o novo componente
 import { Song } from "@/types/song";
 import { toast } from "sonner";
 import { useNavigate } from 'react-router-dom';
@@ -19,6 +20,7 @@ const RepertoiresPage: React.FC = () => {
   const [viewerNavigableSongs, setViewerNavigableSongs] = useState<Song[]>([]);
   const [currentViewerSongIndex, setCurrentViewerSongIndex] = useState<number>(0);
   const [viewerSearchTerm, setViewerSearchTerm] = useState<string>('');
+  const [isSongSelectionSidebarOpen, setIsSongSelectionSidebarOpen] = useState<boolean>(false); // Novo estado
 
   const {
     songs,
@@ -36,6 +38,7 @@ const RepertoiresPage: React.FC = () => {
     handleCreateRepertoire,
     handleSelectRepertoire,
     handleDeleteRepertoire,
+    handleToggleSongInRepertoire, // Adicionado para passar ao sidebar
     loadingRepertoires,
   } = useRepertoireManagement({ songs });
 
@@ -69,6 +72,14 @@ const RepertoiresPage: React.FC = () => {
     setIsViewerOpen(true);
     toast.info(`Abrindo repertório "${rep.name}" em tela cheia.`);
   }, [selectedRepertoireId, repertoires, songs]);
+
+  const handleOpenSongSelectionSidebar = useCallback(() => {
+    if (!selectedRepertoireId) {
+      toast.error("Por favor, selecione um repertório primeiro.");
+      return;
+    }
+    setIsSongSelectionSidebarOpen(true);
+  }, [selectedRepertoireId]);
 
   const handleNextViewerSong = () => {
     if (!activeViewerSongId || viewerNavigableSongs.length === 0) return;
@@ -139,6 +150,7 @@ const RepertoiresPage: React.FC = () => {
           handleSelectRepertoire={handleSelectRepertoire}
           handleDeleteRepertoire={handleDeleteRepertoire}
           handleOpenRepertoireViewer={handleOpenRepertoireViewer}
+          onOpenSongSelectionSidebar={handleOpenSongSelectionSidebar} // Passar a nova função
         />
       </SheetContent>
 
@@ -165,6 +177,15 @@ const RepertoiresPage: React.FC = () => {
           await handleUpdateSongChords(songId, newContent);
         }}
         onSongsRefetch={fetchSongs}
+      />
+
+      {/* Novo Sidebar para seleção de músicas */}
+      <RepertoireSongSelectionSidebar
+        open={isSongSelectionSidebarOpen}
+        onOpenChange={setIsSongSelectionSidebarOpen}
+        allSongs={songs}
+        selectedRepertoire={selectedRepertoire}
+        handleToggleSongInRepertoire={handleToggleSongInRepertoire}
       />
     </Sheet>
   );
