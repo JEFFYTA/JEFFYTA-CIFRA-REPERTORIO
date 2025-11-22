@@ -77,8 +77,11 @@ const RepertoireSongSelectionSidebar: React.FC<RepertoireSongSelectionSidebarPro
                       key={song.id}
                       className="flex items-center justify-between p-2 border rounded-md bg-white dark:bg-gray-700 shadow-sm"
                     >
-                      <span className="font-medium truncate flex-1 min-w-0 mr-2">{song.title}</span>
-                      <div className="flex items-center space-x-2 flex-shrink-0">
+                      {/* Título da música: flex-auto para permitir encolher e truncar */}
+                      <span className="font-medium truncate flex-auto min-w-0 mr-2">{song.title}</span>
+                      
+                      {/* Contêiner do switch: flex-none para não encolher */}
+                      <div className="flex items-center space-x-2 flex-none">
                         <Switch
                           id={`song-${song.id}-repertoire-toggle`}
                           checked={isInRepertoire}

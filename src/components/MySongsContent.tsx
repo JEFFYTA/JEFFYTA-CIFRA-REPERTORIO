@@ -17,20 +17,20 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Trash2, Search, Play } from 'lucide-react'; // Adicionado Play
+import { Trash2, Search, Play } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { Repertoire } from "@/types/repertoire";
 import { Song } from "@/types/song";
 
 interface MySongsContentProps {
   songs: Song[];
-  currentSongId: string | null; // Alterado de currentSongIndex para currentSongId
+  currentSongId: string | null;
   handleLoadSong: (id: string) => void;
   handleDeleteSong: (id: string) => void;
   selectedRepertoireId: string | null;
   selectedRepertoire: Repertoire | null;
   handleToggleSongInRepertoire: (songId: string, isChecked: boolean) => void;
-  onOpenViewer: (songId: string) => void; // Novo prop para abrir o viewer
+  onOpenViewer: (songId: string) => void;
 }
 
 const MySongsContent: React.FC<MySongsContentProps> = ({
@@ -78,8 +78,11 @@ const MySongsContent: React.FC<MySongsContentProps> = ({
                     currentSongId === song.id && "bg-blue-50 dark:bg-blue-900 border-blue-500 ring-2 ring-blue-500"
                   )}
                 >
-                  <span className="font-medium truncate flex-1 min-w-0 mr-2">{song.title}</span>
-                  <div className="flex gap-1 items-center flex-shrink-0">
+                  {/* Título da música: flex-auto para permitir encolher e truncar */}
+                  <span className="font-medium truncate flex-auto min-w-0 mr-2">{song.title}</span>
+                  
+                  {/* Contêiner dos botões: flex-none para não encolher */}
+                  <div className="flex gap-1 items-center flex-none">
                     {selectedRepertoireId && (
                       <div className="flex items-center space-x-2">
                         <Switch
@@ -93,7 +96,7 @@ const MySongsContent: React.FC<MySongsContentProps> = ({
                       </div>
                     )}
                     <Button
-                      onClick={() => onOpenViewer(song.id)} // Usar onOpenViewer
+                      onClick={() => onOpenViewer(song.id)}
                       variant="ghost"
                       size="sm"
                       className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
@@ -101,7 +104,6 @@ const MySongsContent: React.FC<MySongsContentProps> = ({
                     >
                       <Play className="h-4 w-4" />
                     </Button>
-                    {/* Botão "Carregar" removido */}
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
