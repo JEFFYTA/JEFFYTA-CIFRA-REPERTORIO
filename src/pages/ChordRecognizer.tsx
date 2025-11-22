@@ -4,16 +4,18 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Music, ListMusic, Loader2 } from 'lucide-react';
+import { Music, ListMusic, Loader2, ArrowLeft } from 'lucide-react'; // Importar ArrowLeft
 import { Song } from "@/types/song";
 import ChordRecognizerCore from "@/components/ChordRecognizerCore";
 import ChordViewer from "@/components/ChordViewer";
 import { useSongManagement } from "@/hooks/useSongManagement";
-import { useRepertoireManagement } from "@/hooks/useRepertoireManagement"; // Ainda necessário para o ChordViewer
+import { useRepertoireManagement } from "@/hooks/useRepertoireManagement";
 import { supabase } from "@/integrations/supabase/client";
 import { transposeChordLine } from "@/lib/chordUtils";
+import { useNavigate } from 'react-router-dom'; // Importar useNavigate
 
 const ChordRecognizer = () => {
+  const navigate = useNavigate(); // Inicializar useNavigate
   const [isViewerOpen, setIsViewerOpen] = useState<boolean>(false);
   const [isRepertoireViewerActive, setIsRepertoireViewerActive] = useState<boolean>(false);
   const [viewerSearchTerm, setViewerSearchTerm] = useState<string>('');
@@ -29,7 +31,7 @@ const ChordRecognizer = () => {
     originalOutputText,
     setOriginalOutputText,
     songs,
-    setSongs, // Manter setSongs para o ChordViewer
+    setSongs,
     currentSongIndex,
     newSongTitle,
     setNewSongTitle,
@@ -44,7 +46,6 @@ const ChordRecognizer = () => {
     initialInputText: ''
   });
 
-  // useRepertoireManagement é necessário aqui para que o ChordViewer possa exibir repertórios
   const {
     repertoires,
     selectedRepertoireId,
@@ -166,7 +167,6 @@ const ChordRecognizer = () => {
     ? viewerNavigableSongs.find(s => s.id === activeViewerSongId)
     : null;
 
-  // O handleSignOut foi movido para HomePage
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -174,52 +174,59 @@ const ChordRecognizer = () => {
       console.error("Erro ao sair:", error);
     } else {
       toast.success("Você foi desconectado.");
-      // Não precisa mais de setSession(null) aqui, pois o App.tsx gerencia
       handleClear();
     }
   };
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-50 p-4 space-y-4 lg:space-y-0 lg:space-x-4">
-      <ChordRecognizerCore
-        inputText={inputText}
-        onInputTextChange={setInputText}
-        outputText={outputText}
-        onOutputTextChange={handleOutputTextChange}
-        onTranspose={handleTranspose}
-        onRestore={handleRestore}
-        onClear={handleClear}
-        onSaveOutput={handleSaveOutput}
-        onOpenFullScreenViewer={handleOpenFullScreenViewer}
-        onSignOut={handleSignOut} // Mantido para o botão de sair no ChordRecognizerCore
-        newSongTitle={newSongTitle}
-        onNewSongTitleChange={setNewSongTitle}
-      />
+    <div className="flex-1 flex flex-col bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-50 p-4">
+      <div className="flex items-center mb-4">
+        <Button variant="ghost" onClick={() => navigate(-1)} className="mr-2">
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <h2 className="text-2xl font-bold flex-1 text-center lg:text-left">Reconhecedor de Cifras</h2>
+      </div>
+      <div className="flex-1 flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4">
+        <ChordRecognizerCore
+          inputText={inputText}
+          onInputTextChange={setInputText}
+          outputText={outputText}
+          onOutputTextChange={handleOutputTextChange}
+          onTranspose={handleTranspose}
+          onRestore={handleRestore}
+          onClear={handleClear}
+          onSaveOutput={handleSaveOutput}
+          onOpenFullScreenViewer={handleOpenFullScreenViewer}
+          onSignOut={handleSignOut}
+          newSongTitle={newSongTitle}
+          onNewSongTitleChange={setNewSongTitle}
+        />
 
-      <ChordViewer
-        open={isViewerOpen}
-        onOpenChange={setIsViewerOpen}
-        currentSong={currentViewerSong}
-        viewerNavigableSongs={viewerNavigableSongs}
-        currentViewerSongIndex={currentViewerSongIndex}
-        onNextSong={handleNextViewerSong}
-        onPreviousSong={handlePreviousViewerSong}
-        onSearchTermChange={setViewerSearchTerm}
-        searchTerm={viewerSearchTerm}
-        searchResults={viewerNavigableSongs.filter(s => s.id !== activeViewerSongId)}
-        onSelectViewerSong={handleSelectViewerSong}
-        isRepertoireViewerActive={isRepertoireViewerActive}
-        selectedRepertoireName={selectedRepertoire?.name || null}
-        onContentChange={(newContent) => {
-          if (currentViewerSong) {
-            handleUpdateSongChords(currentViewerSong.id, newContent);
-          }
-        }}
-        onSaveTransposition={async (songId, newContent) => {
-          await handleUpdateSongChords(songId, newContent);
-        }}
-        onSongsRefetch={fetchSongs}
-      />
+        <ChordViewer
+          open={isViewerOpen}
+          onOpenChange={setIsViewerOpen}
+          currentSong={currentViewerSong}
+          viewerNavigableSongs={viewerNavigableSongs}
+          currentViewerSongIndex={currentViewerSongIndex}
+          onNextSong={handleNextViewerSong}
+          onPreviousSong={handlePreviousViewerSong}
+          onSearchTermChange={setViewerSearchTerm}
+          searchTerm={viewerSearchTerm}
+          searchResults={viewerNavigableSongs.filter(s => s.id !== activeViewerSongId)}
+          onSelectViewerSong={handleSelectViewerSong}
+          isRepertoireViewerActive={isRepertoireViewerActive}
+          selectedRepertoireName={selectedRepertoire?.name || null}
+          onContentChange={(newContent) => {
+            if (currentViewerSong) {
+              handleUpdateSongChords(currentViewerSong.id, newContent);
+            }
+          }}
+          onSaveTransposition={async (songId, newContent) => {
+            await handleUpdateSongChords(songId, newContent);
+          }}
+          onSongsRefetch={fetchSongs}
+        />
+      </div>
     </div>
   );
 };

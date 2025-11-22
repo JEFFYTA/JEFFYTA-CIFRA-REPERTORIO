@@ -3,14 +3,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
-import { X } from 'lucide-react';
+import { X, ArrowLeft } from 'lucide-react'; // Importar ArrowLeft
 import { useRepertoireManagement } from "@/hooks/useRepertoireManagement";
-import { useSongManagement } from "@/hooks/useSongManagement"; // Para obter os dados das músicas
-import MyRepertoiresContent from "@/components/MyRepertoiresContent"; // Conteúdo refatorado
+import { useSongManagement } from "@/hooks/useSongManagement";
+import MyRepertoiresContent from "@/components/MyRepertoiresContent";
 import ChordViewer from "@/components/ChordViewer";
 import { Song } from "@/types/song";
 import { toast } from "sonner";
-import { useNavigate } from 'react-router-dom'; // Importar useNavigate
+import { useNavigate } from 'react-router-dom';
 
 const RepertoiresPage: React.FC = () => {
   const navigate = useNavigate();
@@ -39,7 +39,6 @@ const RepertoiresPage: React.FC = () => {
     loadingRepertoires,
   } = useRepertoireManagement({ songs });
 
-  // Função para abrir o ChordViewer com as músicas do repertório selecionado
   const handleOpenRepertoireViewer = useCallback(() => {
     if (!selectedRepertoireId) {
       toast.error("Nenhum repertório selecionado.");
@@ -57,7 +56,7 @@ const RepertoiresPage: React.FC = () => {
       .sort((a, b) => a.title.localeCompare(b.title));
 
     setViewerNavigableSongs(repertoireSongs);
-    setViewerSearchTerm(''); // Limpa a busca para a visualização do repertório
+    setViewerSearchTerm('');
 
     if (repertoireSongs.length > 0) {
       setActiveViewerSongId(repertoireSongs[0].id);
@@ -71,7 +70,6 @@ const RepertoiresPage: React.FC = () => {
     toast.info(`Abrindo repertório "${rep.name}" em tela cheia.`);
   }, [selectedRepertoireId, repertoires, songs]);
 
-  // Lógica para navegação no viewer
   const handleNextViewerSong = () => {
     if (!activeViewerSongId || viewerNavigableSongs.length === 0) return;
     const nextIndex = (currentViewerSongIndex + 1) % viewerNavigableSongs.length;
@@ -100,7 +98,6 @@ const RepertoiresPage: React.FC = () => {
     ? viewerNavigableSongs.find(s => s.id === activeViewerSongId)
     : null;
 
-  // Efeito para atualizar a lista de músicas navegáveis quando o repertório selecionado ou as músicas mudam
   useEffect(() => {
     if (isViewerOpen && selectedRepertoire) {
       const repertoireSongs = selectedRepertoire.songIds
@@ -119,9 +116,12 @@ const RepertoiresPage: React.FC = () => {
   }, [selectedRepertoire, songs, isViewerOpen, activeViewerSongId]);
 
   return (
-    <Sheet open={true} onOpenChange={() => navigate('/')}> {/* Sempre aberta, fecha navegando para home */}
+    <Sheet open={true} onOpenChange={() => navigate('/')}>
       <SheetContent side="right" className="w-full max-w-full sm:max-w-md flex flex-col">
         <SheetHeader className="flex flex-row items-center justify-between p-4 border-b dark:border-gray-700">
+          <Button variant="ghost" onClick={() => navigate(-1)} className="mr-2">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
           <SheetTitle className="text-2xl text-center flex-1">Meus Repertórios</SheetTitle>
           <SheetClose asChild>
             <Button variant="ghost" size="sm" className="p-2">
@@ -154,7 +154,7 @@ const RepertoiresPage: React.FC = () => {
         searchTerm={viewerSearchTerm}
         searchResults={viewerNavigableSongs.filter(s => s.id !== activeViewerSongId)}
         onSelectViewerSong={handleSelectViewerSong}
-        isRepertoireViewerActive={true} // É visualizador de repertório aqui
+        isRepertoireViewerActive={true}
         selectedRepertoireName={selectedRepertoire?.name || null}
         onContentChange={(newContent) => {
           if (currentViewerSong) {
