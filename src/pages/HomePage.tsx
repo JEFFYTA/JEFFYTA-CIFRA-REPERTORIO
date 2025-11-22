@@ -20,10 +20,20 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-64px)] p-4 bg-gray-100 dark:bg-gray-900">
-      <Card className="w-full max-w-lg p-6 shadow-lg text-center">
+    <div className="flex flex-col items-center justify-center flex-1 p-4
+                    bg-gradient-to-br from-purple-50 to-blue-50
+                    dark:from-gray-900 dark:to-gray-950">
+      <div className="text-center mb-8">
+        <h2 className="text-4xl font-extrabold text-gray-800 dark:text-gray-100 mb-2">
+          Olá! O que vamos tocar hoje?
+        </h2>
+        <p className="text-lg text-gray-600 dark:text-gray-300">
+          Escolha uma opção para começar a gerenciar suas cifras e repertórios.
+        </p>
+      </div>
+      <Card className="w-full max-w-lg p-6 shadow-lg text-center bg-white dark:bg-gray-800">
         <CardHeader>
-          <CardTitle className="text-3xl font-bold mb-6">Escolha uma opção</CardTitle>
+          <CardTitle className="text-3xl font-bold mb-6 text-gray-900 dark:text-gray-50">Escolha uma opção</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <Link to="/recognizer" className="w-full">
@@ -44,7 +54,7 @@ const HomePage: React.FC = () => {
           <Button
             onClick={handleSignOut}
             variant="outline"
-            className="w-full h-12 text-lg mt-6"
+            className="w-full h-12 text-lg mt-6 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <LogOut className="mr-3 h-5 w-5" /> Sair
           </Button>
