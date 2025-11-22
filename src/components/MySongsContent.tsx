@@ -78,8 +78,8 @@ const MySongsContent: React.FC<MySongsContentProps> = ({
                     currentSongId === song.id && "bg-blue-50 dark:bg-blue-900 border-blue-500 ring-2 ring-blue-500"
                   )}
                 >
-                  <span className="font-medium truncate flex-grow mr-2">{song.title}</span>
-                  <div className="flex gap-1 items-center flex-shrink-0 min-w-[100px]">
+                  <span className="font-medium truncate flex-1 min-w-0 mr-2">{song.title}</span>
+                  <div className="flex gap-1 items-center flex-shrink-0">
                     {selectedRepertoireId && (
                       <div className="flex items-center space-x-2">
                         <Switch

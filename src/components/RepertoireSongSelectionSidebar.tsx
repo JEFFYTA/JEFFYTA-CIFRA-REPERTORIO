@@ -77,7 +77,7 @@ const RepertoireSongSelectionSidebar: React.FC<RepertoireSongSelectionSidebarPro
                       key={song.id}
                       className="flex items-center justify-between p-2 border rounded-md bg-white dark:bg-gray-700 shadow-sm"
                     >
-                      <span className="font-medium truncate flex-grow mr-2">{song.title}</span>
+                      <span className="font-medium truncate flex-1 min-w-0 mr-2">{song.title}</span>
                       <div className="flex items-center space-x-2 flex-shrink-0">
                         <Switch
                           id={`song-${song.id}-repertoire-toggle`}
