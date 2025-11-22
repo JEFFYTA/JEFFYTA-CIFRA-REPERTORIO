@@ -78,23 +78,8 @@ const MySongsContent: React.FC<MySongsContentProps> = ({
                     currentSongId === song.id && "bg-blue-50 dark:bg-blue-900 border-blue-500 ring-2 ring-blue-500"
                   )}
                 >
-                  {/* Título da música: flex-auto para permitir encolher e truncar */}
-                  <span className="font-medium truncate flex-auto min-w-0 mr-2">{song.title}</span>
-                  
-                  {/* Contêiner dos botões: flex-none para não encolher */}
-                  <div className="flex gap-1 items-center flex-none">
-                    {selectedRepertoireId && (
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id={`song-${song.id}-repertoire-toggle`}
-                          checked={isInRepertoire}
-                          onCheckedChange={(checked) => handleToggleSongInRepertoire(song.id, checked)}
-                        />
-                        <Label htmlFor={`song-${song.id}-repertoire-toggle`} className="sr-only">
-                          {isInRepertoire ? "Remover do repertório" : "Adicionar ao repertório"}
-                        </Label>
-                      </div>
-                    )}
+                  {/* Contêiner dos botões e switch: flex-none para não encolher */}
+                  <div className="flex gap-1 items-center flex-none mr-2"> {/* Adicionado mr-2 para espaçamento */}
                     <Button
                       onClick={() => onOpenViewer(song.id)}
                       variant="ghost"
@@ -130,7 +115,21 @@ const MySongsContent: React.FC<MySongsContentProps> = ({
                         </AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
+                    {selectedRepertoireId && (
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id={`song-${song.id}-repertoire-toggle`}
+                          checked={isInRepertoire}
+                          onCheckedChange={(checked) => handleToggleSongInRepertoire(song.id, checked)}
+                        />
+                        <Label htmlFor={`song-${song.id}-repertoire-toggle`} className="sr-only">
+                          {isInRepertoire ? "Remover do repertório" : "Adicionar ao repertório"}
+                        </Label>
+                      </div>
+                    )}
                   </div>
+                  {/* Título da música: flex-auto para permitir encolher e truncar */}
+                  <span className="font-medium truncate flex-auto min-w-0">{song.title}</span>
                 </div>
               );
             })}
