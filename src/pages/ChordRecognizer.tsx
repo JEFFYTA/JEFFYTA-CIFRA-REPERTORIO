@@ -106,7 +106,11 @@ const ChordRecognizer = () => {
       song.extractedChords.toLowerCase().includes(lowerCaseSearch)
     );
 
-    filtered.sort((a, b) => a.title.localeCompare(b.title));
+    // Apenas ordenar alfabeticamente se NÃO estiver no modo de repertório
+    if (!isRepertoireMode) {
+      filtered.sort((a, b) => a.title.localeCompare(b.title));
+    }
+    
     return filtered;
   }, [songs, selectedRepertoire]);
 

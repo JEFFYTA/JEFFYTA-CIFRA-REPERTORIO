@@ -164,9 +164,20 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
       return;
     }
 
-    const newSongIds = isChecked
-      ? [...new Set([...currentRepertoire.songIds, songId])]
-      : currentRepertoire.songIds.filter(id => id !== songId);
+    const newSongIds = [...currentRepertoire.songIds]; // Começa com uma cópia dos IDs atuais
+
+    if (isChecked) {
+      // Se estiver adicionando e a música não estiver na lista, adicione-a ao final
+      if (!newSongIds.includes(songId)) {
+        newSongIds.push(songId);
+      }
+    } else {
+      // Se estiver removendo, filtre-a
+      const indexToRemove = newSongIds.indexOf(songId);
+      if (indexToRemove > -1) {
+        newSongIds.splice(indexToRemove, 1);
+      }
+    }
 
     console.log("[handleToggleSongInRepertoire] Current repertoire songIds:", currentRepertoire.songIds);
     console.log("[handleToggleSongInRepertoire] New song IDs to update:", newSongIds);

@@ -55,8 +55,8 @@ const RepertoiresPage: React.FC = () => {
 
     const repertoireSongs = rep.songIds
       .map(id => songs.find(s => s.id === id))
-      .filter((s): s is Song => s !== undefined)
-      .sort((a, b) => a.title.localeCompare(b.title));
+      .filter((s): s is Song => s !== undefined);
+      // .sort((a, b) => a.title.localeCompare(b.title)); // REMOVIDO: para manter a ordem de seleção
 
     setViewerNavigableSongs(repertoireSongs);
     setViewerSearchTerm('');
@@ -113,8 +113,8 @@ const RepertoiresPage: React.FC = () => {
     if (isViewerOpen && selectedRepertoire) {
       const repertoireSongs = selectedRepertoire.songIds
         .map(id => songs.find(s => s.id === id))
-        .filter((s): s is Song => s !== undefined)
-        .sort((a, b) => a.title.localeCompare(b.title));
+        .filter((s): s is Song => s !== undefined);
+        // .sort((a, b) => a.title.localeCompare(b.title)); // REMOVIDO: para manter a ordem de seleção
       setViewerNavigableSongs(repertoireSongs);
 
       if (activeViewerSongId && !repertoireSongs.some(s => s.id === activeViewerSongId)) {
