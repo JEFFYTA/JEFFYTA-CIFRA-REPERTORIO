@@ -74,12 +74,12 @@ const MySongsContent: React.FC<MySongsContentProps> = ({
                 <div
                   key={song.id}
                   className={cn(
-                    "flex items-center justify-between p-2 border rounded-md bg-white dark:bg-gray-700 shadow-sm",
+                    "flex items-center gap-2 p-2 border rounded-md bg-white dark:bg-gray-700 shadow-sm", // Alterado: removido justify-between, adicionado gap-2
                     currentSongId === song.id && "bg-blue-50 dark:bg-blue-900 border-blue-500 ring-2 ring-blue-500"
                   )}
                 >
                   {/* Contêiner dos botões e switch: flex-none para não encolher */}
-                  <div className="flex gap-1 items-center flex-none mr-2"> {/* Adicionado mr-2 para espaçamento */}
+                  <div className="flex gap-1 items-center flex-none"> {/* Removido mr-2, o gap-2 do pai já cuida */}
                     <Button
                       onClick={() => onOpenViewer(song.id)}
                       variant="ghost"

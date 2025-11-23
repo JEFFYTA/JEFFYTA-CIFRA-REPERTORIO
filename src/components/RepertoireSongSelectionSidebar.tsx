@@ -75,10 +75,10 @@ const RepertoireSongSelectionSidebar: React.FC<RepertoireSongSelectionSidebarPro
                   return (
                     <div
                       key={song.id}
-                      className="flex items-center justify-between p-2 border rounded-md bg-white dark:bg-gray-700 shadow-sm"
+                      className="flex items-center gap-2 p-2 border rounded-md bg-white dark:bg-gray-700 shadow-sm" // Alterado: removido justify-between, adicionado gap-2
                     >
                       {/* Contêiner do switch: flex-none para não encolher */}
-                      <div className="flex items-center space-x-2 flex-none mr-2">
+                      <div className="flex items-center space-x-2 flex-none"> {/* Removido mr-2, o gap-2 do pai já cuida */}
                         <Switch
                           id={`song-${song.id}-repertoire-toggle`}
                           checked={isInRepertoire}
