@@ -178,6 +178,11 @@ const ChordRecognizer = () => {
     }
   };
 
+  const handleImportFile = (content: string) => {
+    setInputText(content);
+    // O useEffect em useSongManagement irá automaticamente processar este novo inputText
+  };
+
   return (
     <div className="flex-1 flex flex-col bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-50 p-4">
       <div className="flex items-center mb-4">
@@ -200,6 +205,7 @@ const ChordRecognizer = () => {
           onSignOut={handleSignOut}
           newSongTitle={newSongTitle}
           onNewSongTitleChange={setNewSongTitle}
+          onImportFile={handleImportFile} // Passando a nova função
         />
 
         <ChordViewer

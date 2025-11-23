@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Save, Maximize2 } from 'lucide-react';
+import { Save, Maximize2, Upload } from 'lucide-react'; // Adicionado Upload icon
+import { toast } from "sonner"; // Importar toast
 
 interface ChordRecognizerCoreProps {
   inputText: string;
@@ -21,6 +22,7 @@ interface ChordRecognizerCoreProps {
   onSignOut: () => void;
   newSongTitle: string;
   onNewSongTitleChange: (title: string) => void;
+  onImportFile: (content: string) => void; // Nova prop para conteúdo do arquivo
 }
 
 const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
@@ -36,7 +38,34 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
   onSignOut,
   newSongTitle,
   onNewSongTitleChange,
+  onImportFile, // Usar a nova prop
 }) => {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        onImportFile(content);
+        toast.success(`Arquivo "${file.name}" importado.`);
+      };
+      reader.onerror = () => {
+        toast.error("Erro ao ler o arquivo.");
+      };
+      reader.readAsText(file);
+    }
+    // Limpar o valor do input para permitir o upload do mesmo arquivo novamente
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <>
       <Card className="flex-1 flex flex-col shadow-lg">
@@ -47,6 +76,16 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
           <div className="flex flex-wrap gap-2 mb-4 items-center">
             <label htmlFor="inputMusica" className="font-semibold text-lg">Entrada de Música</label>
             <Button onClick={onClear} variant="destructive" className="ml-auto">Limpar</Button>
+            <Button onClick={handleFileImportClick} variant="outline">
+              <Upload className="mr-2 h-4 w-4" /> Importar Arquivo
+            </Button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept=".txt,.rtf" // Aceitar arquivos de texto e RTF
+            />
             <Button onClick={onSignOut} variant="outline">Sair</Button>
           </div>
           <Textarea
