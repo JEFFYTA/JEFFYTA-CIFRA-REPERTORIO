@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@/components/ui/textarea"; // Manter import para Textarea se for usado em outro lugar, mas não aqui
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { Song } from "@/types/song";
 import { transposeChordLine } from "@/lib/chordUtils";
 import { toast } from "sonner";
+import StyledChordDisplay from './StyledChordDisplay'; // Importar o novo componente
 
 interface ChordViewerProps {
   open: boolean;
@@ -27,7 +28,7 @@ interface ChordViewerProps {
   onSelectViewerSong: (songId: string) => void;
   isRepertoireViewerActive: boolean;
   selectedRepertoireName: string | null;
-  onContentChange: (newContent: string) => void;
+  // onContentChange: (newContent: string) => void; // Removido: edição direta não é mais suportada no viewer
   onSaveTransposition: (songId: string, newContent: string) => Promise<void>;
   onSongsRefetch: () => Promise<void>;
 }
@@ -46,14 +47,14 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
   onSelectViewerSong,
   isRepertoireViewerActive,
   selectedRepertoireName,
-  onContentChange,
+  // onContentChange, // Removido
   onSaveTransposition,
   onSongsRefetch,
 }) => {
   const [viewerTransposeDelta, setViewerTransposeDelta] = useState<number>(0);
   const [viewerFontSize, setViewerFontSize] = useState<number>(1.2);
   const [showSearchResults, setShowSearchResults] = useState<boolean>(false);
-  const [localEditedContent, setLocalEditedContent] = useState<string>(''); // Novo estado para edições locais
+  const [localEditedContent, setLocalEditedContent] = useState<string>(''); // Estado para o conteúdo base, antes da transposição
 
   // Efeito para redefinir configurações do visualizador quando ele abre/fecha
   useEffect(() => {
@@ -112,29 +113,8 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
     return currentSong.title;
   };
 
-  const handleSaveDirectEdit = async () => {
-    if (!currentSong) {
-      toast.error("Nenhuma música selecionada para salvar.");
-      return;
-    }
-
-    // Se o conteúdo local estiver vazio, mas o conteúdo original não, significa que o usuário limpou.
-    // Ou se o conteúdo local for diferente do conteúdo original, significa que houve uma edição.
-    if (currentSong.extractedChords === localEditedContent) {
-      console.log("ChordViewer: Conteúdo não alterado, não salvando.");
-      return;
-    }
-
-    console.log("ChordViewer: Tentando salvar conteúdo editado diretamente para a música ID:", currentSong.id, "Conteúdo:", localEditedContent);
-    try {
-      await onSaveTransposition(currentSong.id, localEditedContent);
-      await onSongsRefetch(); // Recarrega as músicas após salvar a edição
-      toast.success("Edição salva com sucesso!");
-    } catch (error) {
-      console.error("ChordViewer: Erro ao salvar edição direta:", error);
-      toast.error("Erro ao salvar edição: " + (error instanceof Error ? error.message : String(error)));
-    }
-  };
+  // Removido handleSaveDirectEdit, pois a edição direta no viewer não é mais suportada.
+  // const handleSaveDirectEdit = async () => { ... };
 
   const handleSaveTransposedContent = async () => {
     if (!currentSong || viewerTransposeDelta === 0) {
@@ -255,13 +235,9 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
         </DialogHeader>
 
         <div className="flex-1 p-4 overflow-auto font-mono leading-relaxed">
-          <Textarea
-            value={getDisplayedContent()} // Exibe o conteúdo local transposto
-            onChange={(e) => setLocalEditedContent(e.target.value)} // Atualiza o conteúdo local diretamente
-            onBlur={handleSaveDirectEdit} // Salva ao perder o foco
-            className="w-full h-full resize-none border-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
-            style={{ fontSize: `${viewerFontSize}rem` }}
-            disabled={!currentSong} // Desabilita apenas se nenhuma música estiver carregada
+          <StyledChordDisplay
+            content={getDisplayedContent()} // Exibe o conteúdo local transposto e estilizado
+            fontSize={viewerFontSize}
           />
         </div>
 

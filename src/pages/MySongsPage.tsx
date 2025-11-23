@@ -157,11 +157,11 @@ const MySongsPage: React.FC = () => {
         onSelectViewerSong={handleSelectViewerSong}
         isRepertoireViewerActive={false}
         selectedRepertoireName={null}
-        onContentChange={(newContent) => {
-          if (currentViewerSong) {
-            handleUpdateSongChords(currentViewerSong.id, newContent);
-          }
-        }}
+        // onContentChange={(newContent) => { // Removido
+        //   if (currentViewerSong) {
+        //     handleUpdateSongChords(currentViewerSong.id, newContent);
+        //   }
+        // }}
         onSaveTransposition={async (songId, newContent) => {
           await handleUpdateSongChords(songId, newContent);
         }}
