@@ -160,8 +160,8 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-full h-screen flex flex-col p-0 sm:max-w-[90vw] sm:h-[90vh]">
-        <DialogHeader className="p-4 border-b dark:border-gray-700 grid grid-cols-[auto_1fr_auto] items-center gap-2">
-          {/* Primeira coluna: Controles alinhados à esquerda */}
+        <DialogHeader className="p-4 border-b dark:border-gray-700 flex items-center justify-between gap-2 relative">
+          {/* Grupo da esquerda: Input de busca (condicional), Botões de transposição, Dropdown */}
           <div className="flex items-center gap-2 relative z-40">
             {!isRepertoireViewerActive && (
               <div className="relative w-48"> {/* Largura fixa para o input de busca */}
@@ -214,7 +214,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
               +1
             </Button>
 
-            {/* Menu Dropdown para outras ações (agora sem transposição) */}
+            {/* Menu Dropdown para outras ações */}
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="p-2">
@@ -239,14 +239,14 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
             </DropdownMenu>
           </div>
 
-          {/* Segunda coluna: Título centralizado */}
-          <DialogTitle className="text-xl text-center min-w-0 truncate">
+          {/* Título centralizado, mas com z-index menor para não cobrir botões */}
+          <DialogTitle className="text-xl font-bold min-w-0 truncate absolute left-1/2 -translate-x-1/2 z-10">
             {getViewerTitle()}
           </DialogTitle>
 
-          {/* Terceira coluna: Botão de fechar */}
+          {/* Botão de fechar */}
           <DialogClose asChild>
-            <Button variant="ghost" size="sm" className="p-2">
+            <Button variant="ghost" size="sm" className="p-2 relative z-40">
               <X className="h-4 w-4" />
             </Button>
           </DialogClose>
@@ -266,7 +266,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
           />
         ) : (
           <div 
-            className="flex-1 p-4 cursor-text overflow-x-auto" // Adicionado overflow-x-auto aqui
+            className="flex-1 p-4 cursor-text overflow-x-auto"
             onClick={() => currentSong && setIsEditing(true)} // Enter edit mode on click
           >
             <StyledChordDisplay
