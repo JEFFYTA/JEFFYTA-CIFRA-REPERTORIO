@@ -24,7 +24,7 @@ const MySongsPage: React.FC = () => {
     songs,
     fetchSongs,
     handleLoadSong,
-    handleDeleteSong,
+    handleDeleteSong: originalHandleDeleteSong, // Renomear para evitar conflito
     handleUpdateSongChords,
   } = useSongManagement();
 
@@ -32,6 +32,7 @@ const MySongsPage: React.FC = () => {
     selectedRepertoireId,
     selectedRepertoire,
     handleToggleSongInRepertoire,
+    fetchRepertoires, // Obter fetchRepertoires aqui
   } = useRepertoireManagement({ songs });
 
   const handleOpenViewer = useCallback((songId: string) => {
@@ -113,6 +114,12 @@ const MySongsPage: React.FC = () => {
     }
   };
 
+  // Nova função para lidar com a exclusão de músicas e atualizar repertórios
+  const handleDeleteSongAndRepertoires = async (songId: string) => {
+    await originalHandleDeleteSong(songId); // Excluir a música
+    await fetchRepertoires(); // Em seguida, recarregar os repertórios para atualizar as contagens
+  };
+
   return (
     <Sheet open={true} onOpenChange={() => navigate('/')}>
       <SheetContent side="right" className="w-full sm:max-w-lg flex flex-col h-full overflow-y-auto">
@@ -134,7 +141,7 @@ const MySongsPage: React.FC = () => {
             handleLoadSong(songId);
             navigate('/recognizer');
           }}
-          handleDeleteSong={handleDeleteSong}
+          handleDeleteSong={handleDeleteSongAndRepertoires} // Passar a nova função wrapper
           selectedRepertoireId={selectedRepertoireId}
           selectedRepertoire={selectedRepertoire}
           handleToggleSongInRepertoire={handleToggleSongInRepertoire}
