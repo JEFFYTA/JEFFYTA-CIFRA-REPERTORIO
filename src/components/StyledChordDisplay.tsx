@@ -11,7 +11,8 @@ interface StyledChordDisplayProps {
 // Regex para encontrar padrões de cifra comuns, incluindo baixo invertido
 // Adicionado \b (word boundary) no início e no fim para garantir que apenas cifras isoladas sejam reconhecidas.
 // Ex: C, C#m7, G/B, F7M/C
-const chordRegex = /\b([CDEFGAB][#b]?)(m|°)?(6|7|7M|7\(9-\)|7\(9\)|7\(4\)|9|11|13|13-|add9|sus4)?(\/[CDEFGAB][#b]?)?\b/g;
+// Adicionado '4' como uma extensão válida
+const chordRegex = /\b([CDEFGAB][#b]?)(m|°)?(4|6|7|7M|7\(9-\)|7\(9\)|7\(4\)|9|11|13|13-|add9|sus4)?(\/[CDEFGAB][#b]?)?\b/g;
 
 const StyledChordDisplay: React.FC<StyledChordDisplayProps> = ({ content, fontSize }) => {
   const renderLine = (line: string, index: number) => {

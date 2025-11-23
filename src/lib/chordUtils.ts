@@ -12,7 +12,8 @@ export function extrairCifras(texto: string | null | undefined): string {
 
     // Regex para encontrar padrões de cifra comuns, incluindo baixo invertido
     // Ex: C, C#m7, G/B, F7M/C
-    const chordRegex = /([CDEFGAB][#b]?)(m|°)?(6|7|7M|7\(9-\)|7\(9\)|7\(4\)|9|11|13|13-|add9|sus4)?(\/[CDEFGAB][#b]?)?/g;
+    // Adicionado '4' como uma extensão válida
+    const chordRegex = /([CDEFGAB][#b]?)(m|°)?(4|6|7|7M|7\(9-\)|7\(9\)|7\(4\)|9|11|13|13-|add9|sus4)?(\/[CDEFGAB][#b]?)?/g;
     const CHORD_SPACING = 6; // Número de espaços entre as cifras
 
     for (let i = 0; i < linhas.length; i++) {
@@ -84,7 +85,8 @@ export function extrairCifras(texto: string | null | undefined): string {
 export function extractSongTitle(text: string | null | undefined): string {
     const safeText = typeof text === 'string' ? text : '';
     const lines = safeText.split('\n');
-    const chordRegex = /([CDEFGAB][#b]?)(m|°)?(6|7|7M|7\(9-\)|7\(9\)|7\(4\)|9|11|13|13-|add9|sus4)?(\/[CDEFGAB][#b]?)?/g;
+    // Adicionado '4' como uma extensão válida
+    const chordRegex = /([CDEFGAB][#b]?)(m|°)?(4|6|7|7M|7\(9-\)|7\(9\)|7\(4\)|9|11|13|13-|add9|sus4)?(\/[CDEFGAB][#b]?)?/g;
 
     for (const line of lines) {
         const trim = line.trim();
@@ -126,7 +128,8 @@ export function transposeChordLine(line: string | null | undefined, delta: numbe
 
     // Regex para capturar raiz, tipo (m/°), extensões e baixo invertido
     // Ex: F7M/C -> match[1]=F, match[2]=undefined, match[3]=7M, match[4]=/C
-    const chordPartRegex = /^([CDEFGAB][#b]?)(m|°)?(6|7|7M|7\(9-\)|7\(9\)|7\(4\)|9|11|13|13-|add9|sus4)?(\/[CDEFGAB][#b]?)?$/;
+    // Adicionado '4' como uma extensão válida
+    const chordPartRegex = /^([CDEFGAB][#b]?)(m|°)?(4|6|7|7M|7\(9-\)|7\(9\)|7\(4\)|9|11|13|13-|add9|sus4)?(\/[CDEFGAB][#b]?)?$/;
 
     // Dividir a linha por espaços para lidar com múltiplas cifras em uma linha
     const parts = safeLine.split(/(\s+)/); // Manter delimitadores para preservar o espaçamento
@@ -141,7 +144,7 @@ export function transposeChordLine(line: string | null | undefined, delta: numbe
         const raiz = match[1]; // ex: C, G#, Bb
         const tipo = match[2] || ''; // ex: m, °
         const ext = match[3] || ''; // ex: 7M, add9
-        const bassNotePart = match[4] || ''; // ex: /C
+        const bassNotePart = match[4] || ''; // ex: ex: /C
 
         const idx = notaMap[raiz];
         if (idx === undefined) return p; // Raiz não reconhecida, retornar como está
