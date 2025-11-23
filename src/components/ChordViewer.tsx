@@ -160,8 +160,8 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-full h-screen flex flex-col p-0 sm:max-w-[90vw] sm:h-[90vh]">
-        <DialogHeader className="p-4 border-b dark:border-gray-700 grid grid-cols-[auto_1fr_auto] items-center gap-2">
-          {/* Lado esquerdo: Input de busca (condicional), Dropdown, Botão de fechar */}
+        <DialogHeader className="p-4 border-b dark:border-gray-700 flex flex-wrap items-center justify-between gap-2">
+          {/* Grupo da esquerda: Input de busca (condicional), Botões de transposição, Dropdown */}
           <div className="flex items-center gap-2 relative z-40">
             {!isRepertoireViewerActive && (
               <div className="relative w-48"> {/* Largura fixa para o input de busca */}
@@ -203,7 +203,18 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
               </div>
             )}
 
-            {/* Menu Dropdown para outras ações */}
+            {/* Botões de transposição */}
+            <Button onClick={() => setViewerTransposeDelta(prev => prev - 1)} disabled={!currentSong || isEditing} variant="outline" size="sm">
+              -1
+            </Button>
+            <Button onClick={() => setViewerTransposeDelta(0)} disabled={!currentSong || viewerTransposeDelta === 0 || isEditing} variant="outline" size="sm">
+              Reset
+            </Button>
+            <Button onClick={() => setViewerTransposeDelta(prev => prev + 1)} disabled={!currentSong || isEditing} variant="outline" size="sm">
+              +1
+            </Button>
+
+            {/* Menu Dropdown para outras ações (agora sem transposição) */}
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="p-2">
@@ -211,19 +222,13 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
-                {/* Opções de transposição e salvar transposição */}
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setViewerTransposeDelta(prev => prev - 1)} disabled={!currentSong || isEditing}>
-                  Transpor -1
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setViewerTransposeDelta(prev => prev + 1)} disabled={!currentSong || isEditing}>
-                  Transpor +1
-                </DropdownMenuItem>
+                {/* Opção de salvar transposição */}
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={handleSaveTransposedContent} disabled={!currentSong || viewerTransposeDelta === 0 || isEditing}>
                   <Save className="mr-2 h-4 w-4" /> Salvar Transposição
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
 
-                {/* Opções de tamanho da fonte - sempre disponíveis */}
+                {/* Opções de tamanho da fonte */}
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setViewerFontSize(prev => Math.max(prev - 0.1, 0.8))} disabled={!currentSong}>
                   <ZoomOut className="mr-2 h-4 w-4" /> Diminuir Fonte
                 </DropdownMenuItem>
@@ -232,22 +237,19 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* Botão de fechar */}
-            <DialogClose asChild>
-              <Button variant="ghost" size="sm" className="p-2">
-                <X className="h-4 w-4" />
-              </Button>
-            </DialogClose>
           </div>
 
           {/* Centro: Título */}
-          <DialogTitle className="text-xl text-center min-w-0 truncate">
+          <DialogTitle className="text-xl text-center flex-1 min-w-0 truncate">
             {getViewerTitle()}
           </DialogTitle>
 
-          {/* Lado direito: Placeholder vazio para equilibrar o lado esquerdo. */}
-          <div></div>
+          {/* Lado direito: Botão de fechar */}
+          <DialogClose asChild>
+            <Button variant="ghost" size="sm" className="p-2">
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogClose>
         </DialogHeader>
 
         {isEditing ? (
