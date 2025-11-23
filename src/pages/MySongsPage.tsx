@@ -115,7 +115,7 @@ const MySongsPage: React.FC = () => {
 
   return (
     <Sheet open={true} onOpenChange={() => navigate('/')}>
-      <SheetContent side="right" className="w-full sm:max-w-lg flex flex-col h-full">
+      <SheetContent side="right" className="w-full sm:max-w-lg flex flex-col h-full overflow-y-auto">
         <SheetHeader className="flex flex-row items-center justify-between p-4 border-b dark:border-gray-700">
           <Button variant="ghost" onClick={() => navigate(-1)} className="mr-2">
             <ArrowLeft className="h-5 w-5" />
