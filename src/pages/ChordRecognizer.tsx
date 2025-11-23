@@ -11,7 +11,7 @@ import ChordViewer from "@/components/ChordViewer";
 import { useSongManagement } from "@/hooks/useSongManagement";
 import { useRepertoireManagement } from "@/hooks/useRepertoireManagement";
 import { supabase } from "@/integrations/supabase/client";
-import { transposeChordLine } from "@/lib/chordUtils";
+import { transposeChordLine, extractSongTitle } from "@/lib/chordUtils"; // Importar extractSongTitle
 import { useNavigate } from 'react-router-dom';
 
 const ChordRecognizer = () => {
@@ -75,6 +75,20 @@ const ChordRecognizer = () => {
     setOutputText(newText);
     setOriginalOutputText(newText);
   };
+
+  // Nova função para importar cifras diretamente para o painel de saída
+  const handleImportChordsDirectly = useCallback((fileContent: string) => {
+    setOutputText(fileContent);
+    setOriginalOutputText(fileContent);
+    // Extrair título do conteúdo importado
+    const detectedTitle = extractSongTitle(fileContent);
+    if (detectedTitle) {
+      setNewSongTitle(detectedTitle);
+    } else {
+      setNewSongTitle('');
+    }
+    // Não alterar o inputText neste caso
+  }, [setOutputText, setOriginalOutputText, setNewSongTitle]);
 
   const prepareViewerSongs = useCallback((search: string, isRepertoireMode: boolean) => {
     let baseSongsList: Song[] = [];
@@ -178,32 +192,8 @@ const ChordRecognizer = () => {
     }
   };
 
-  const handleImportFile = (file: File) => {
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      const fileContent = e.target?.result as string;
-      
-      // Verificar se o arquivo é um .txt
-      if (file.name.toLowerCase().endsWith('.txt') || file.type === 'text/plain') {
-        setInputText(fileContent);
-        toast.success(`Arquivo "${file.name}" importado.`);
-      } else {
-        // Se não for .txt, exibir uma mensagem de erro e instrução
-        toast.error(
-          "Apenas arquivos de texto simples (.txt) são suportados para importação. " +
-          "Por favor, converta seu arquivo RTF para TXT antes de importar (ex: abra no Bloco de Notas e salve como .txt)."
-        );
-        console.warn("Tentativa de importar arquivo não-TXT:", file.name, file.type);
-      }
-    };
-
-    reader.onerror = () => {
-      toast.error("Erro ao ler o arquivo.");
-    };
-
-    reader.readAsText(file);
-  };
+  // Removido handleImportFile, pois a lógica agora está em handleImportChordsDirectly
+  // e é chamada diretamente do ChordRecognizerCore.
 
   return (
     <div className="flex-1 flex flex-col bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-50 p-4">
@@ -227,7 +217,7 @@ const ChordRecognizer = () => {
           onSignOut={handleSignOut}
           newSongTitle={newSongTitle}
           onNewSongTitleChange={setNewSongTitle}
-          onImportFile={handleImportFile}
+          onImportChordsDirectly={handleImportChordsDirectly} // Passar a nova função
         />
 
         <ChordViewer

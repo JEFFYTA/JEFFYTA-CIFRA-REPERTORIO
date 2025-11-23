@@ -22,7 +22,7 @@ interface ChordRecognizerCoreProps {
   onSignOut: () => void;
   newSongTitle: string;
   onNewSongTitleChange: (title: string) => void;
-  onImportFile: (file: File) => void; // Alterado: agora aceita o objeto File
+  onImportChordsDirectly: (fileContent: string) => void; // Nova prop para importação direta
 }
 
 const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
@@ -38,7 +38,7 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
   onSignOut,
   newSongTitle,
   onNewSongTitleChange,
-  onImportFile,
+  onImportChordsDirectly, // Usar a nova prop
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -49,7 +49,24 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      onImportFile(file); // Passa o objeto File completo
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const fileContent = e.target?.result as string;
+        if (file.name.toLowerCase().endsWith('.txt') || file.type === 'text/plain') {
+          onImportChordsDirectly(fileContent); // Chamar a nova prop com o conteúdo
+          toast.success(`Arquivo "${file.name}" importado para Cifras Organizadas.`);
+        } else {
+          toast.error(
+            "Apenas arquivos de texto simples (.txt) são suportados para importação. " +
+            "Por favor, converta seu arquivo RTF para TXT antes de importar (ex: abra no Bloco de Notas e salve como .txt)."
+          );
+          console.warn("Tentativa de importar arquivo não-TXT:", file.name, file.type);
+        }
+      };
+      reader.onerror = () => {
+        toast.error("Erro ao ler o arquivo.");
+      };
+      reader.readAsText(file);
     }
     // Limpar o valor do input para permitir o upload do mesmo arquivo novamente
     if (fileInputRef.current) {
