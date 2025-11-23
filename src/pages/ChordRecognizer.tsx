@@ -234,11 +234,11 @@ const ChordRecognizer = () => {
           onSelectViewerSong={handleSelectViewerSong}
           isRepertoireViewerActive={isRepertoireViewerActive}
           selectedRepertoireName={selectedRepertoire?.name || null}
-          // onContentChange={(newContent) => { // Removido
-          //   if (currentViewerSong) {
-          //     handleUpdateSongChords(currentViewerSong.id, newContent);
-          //   }
-          // }}
+          onContentChange={(newContent) => { // Reintroduzido
+            if (currentViewerSong) {
+              handleUpdateSongChords(currentViewerSong.id, newContent);
+            }
+          }}
           onSaveTransposition={async (songId, newContent) => {
             await handleUpdateSongChords(songId, newContent);
           }}
