@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Play, Trash2, FileText } from 'lucide-react';
+import { Play, Trash2, FileText, Download } from 'lucide-react'; // Adicionado Download icon
 import { cn } from "@/lib/utils";
 import { Song } from "@/types/song";
 import { Repertoire } from "@/types/repertoire";
@@ -30,6 +30,7 @@ interface MySongsContentProps {
   selectedRepertoire: Repertoire | null;
   handleToggleSongInRepertoire: (songId: string, isChecked: boolean) => void;
   onOpenViewer: (songId: string) => void;
+  onBackupSongs: () => void; // Nova prop para a função de backup
 }
 
 const MySongsContent: React.FC<MySongsContentProps> = ({
@@ -41,11 +42,22 @@ const MySongsContent: React.FC<MySongsContentProps> = ({
   selectedRepertoire,
   handleToggleSongInRepertoire,
   onOpenViewer,
+  onBackupSongs, // Usar a nova prop
 }) => {
   const sortedSongs = [...songs].sort((a, b) => a.title.localeCompare(b.title));
 
   return (
     <div className="flex flex-col flex-1 p-4">
+      <div className="flex justify-end mb-4">
+        <Button
+          onClick={onBackupSongs}
+          disabled={songs.length === 0}
+          className="bg-purple-600 hover:bg-purple-700 text-white"
+          size="sm"
+        >
+          <Download className="mr-2 h-4 w-4" /> Fazer Backup
+        </Button>
+      </div>
       <ScrollArea className="flex-1 border rounded-md p-2">
         {sortedSongs.length === 0 ? (
           <p className="text-center text-gray-500 dark:text-gray-400">Nenhuma música salva ainda.</p>

@@ -10,6 +10,7 @@ import MySongsContent from "@/components/MySongsContent";
 import ChordViewer from "@/components/ChordViewer";
 import { Song } from "@/types/song";
 import { useNavigate } from 'react-router-dom';
+import { toast } from "sonner"; // Importar toast
 
 const MySongsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -87,6 +88,31 @@ const MySongsPage: React.FC = () => {
     }
   }, [songs, isViewerOpen, activeViewerSongId]);
 
+  const handleBackupSongs = () => {
+    if (songs.length === 0) {
+      toast.info("Não há músicas para fazer backup.");
+      return;
+    }
+
+    try {
+      // Mapear para um formato mais limpo, se necessário, ou usar o objeto Song diretamente
+      const backupData = JSON.stringify(songs, null, 2); // Pretty print JSON
+      const blob = new Blob([backupData], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cifra-repertorio-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Backup das músicas realizado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao fazer backup das músicas:", error);
+      toast.error("Erro ao fazer backup das músicas.");
+    }
+  };
+
   return (
     <Sheet open={true} onOpenChange={() => navigate('/')}>
       <SheetContent side="right" className="w-full sm:max-w-lg flex flex-col h-full">
@@ -113,6 +139,7 @@ const MySongsPage: React.FC = () => {
           selectedRepertoire={selectedRepertoire}
           handleToggleSongInRepertoire={handleToggleSongInRepertoire}
           onOpenViewer={handleOpenViewer}
+          onBackupSongs={handleBackupSongs} // Passar a função de backup
         />
       </SheetContent>
 
