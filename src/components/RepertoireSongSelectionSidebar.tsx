@@ -43,7 +43,7 @@ const RepertoireSongSelectionSidebar: React.FC<RepertoireSongSelectionSidebarPro
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md flex flex-col h-full">
+      <SheetContent side="right" className="w-full sm:max-w-md flex flex-col h-full overflow-y-auto">
         <SheetHeader className="flex flex-row items-center justify-between p-4 border-b dark:border-gray-700">
           <SheetTitle className="text-2xl text-center flex-1">Músicas para "{repertoireName}"</SheetTitle>
           <SheetClose asChild>
