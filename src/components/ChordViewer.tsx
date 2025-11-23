@@ -112,7 +112,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
     }
 
     if (isRepertoireViewerActive && selectedRepertoireName) {
-      return `${selectedRepertoireName} - ${currentSong.title}`;
+      return currentSong.title; // Alterado para mostrar apenas o título da música
     }
     return currentSong.title;
   };
