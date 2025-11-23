@@ -160,8 +160,8 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-full h-screen flex flex-col p-0 sm:max-w-[90vw] sm:h-[90vh]">
-        <DialogHeader className="p-4 border-b dark:border-gray-700 flex flex-wrap items-center justify-between gap-2">
-          {/* Grupo da esquerda: Input de busca (condicional), Botões de transposição, Dropdown */}
+        <DialogHeader className="p-4 border-b dark:border-gray-700 grid grid-cols-[auto_1fr_auto] items-center gap-2">
+          {/* Primeira coluna: Controles alinhados à esquerda */}
           <div className="flex items-center gap-2 relative z-40">
             {!isRepertoireViewerActive && (
               <div className="relative w-48"> {/* Largura fixa para o input de busca */}
@@ -239,12 +239,12 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
             </DropdownMenu>
           </div>
 
-          {/* Centro: Título */}
-          <DialogTitle className="text-xl text-center flex-1 min-w-0 truncate">
+          {/* Segunda coluna: Título centralizado */}
+          <DialogTitle className="text-xl text-center min-w-0 truncate">
             {getViewerTitle()}
           </DialogTitle>
 
-          {/* Lado direito: Botão de fechar */}
+          {/* Terceira coluna: Botão de fechar */}
           <DialogClose asChild>
             <Button variant="ghost" size="sm" className="p-2">
               <X className="h-4 w-4" />
