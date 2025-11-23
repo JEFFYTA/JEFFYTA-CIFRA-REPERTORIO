@@ -22,7 +22,7 @@ interface ChordRecognizerCoreProps {
   onSignOut: () => void;
   newSongTitle: string;
   onNewSongTitleChange: (title: string) => void;
-  onImportFile: (content: string) => void; // Nova prop para conteúdo do arquivo
+  onImportFile: (file: File) => void; // Alterado: agora aceita o objeto File
 }
 
 const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
@@ -38,7 +38,7 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
   onSignOut,
   newSongTitle,
   onNewSongTitleChange,
-  onImportFile, // Usar a nova prop
+  onImportFile,
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -49,16 +49,7 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const content = e.target?.result as string;
-        onImportFile(content);
-        toast.success(`Arquivo "${file.name}" importado.`);
-      };
-      reader.onerror = () => {
-        toast.error("Erro ao ler o arquivo.");
-      };
-      reader.readAsText(file);
+      onImportFile(file); // Passa o objeto File completo
     }
     // Limpar o valor do input para permitir o upload do mesmo arquivo novamente
     if (fileInputRef.current) {

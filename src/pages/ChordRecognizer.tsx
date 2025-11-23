@@ -13,6 +13,7 @@ import { useRepertoireManagement } from "@/hooks/useRepertoireManagement";
 import { supabase } from "@/integrations/supabase/client";
 import { transposeChordLine } from "@/lib/chordUtils";
 import { useNavigate } from 'react-router-dom'; // Importar useNavigate
+import rtfToText from 'rtf-to-text'; // Importar a biblioteca rtf-to-text
 
 const ChordRecognizer = () => {
   const navigate = useNavigate(); // Inicializar useNavigate
@@ -178,9 +179,34 @@ const ChordRecognizer = () => {
     }
   };
 
-  const handleImportFile = (content: string) => {
-    setInputText(content);
-    // O useEffect em useSongManagement irá automaticamente processar este novo inputText
+  const handleImportFile = (file: File) => {
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const fileContent = e.target?.result as string;
+
+      if (file.type === 'application/rtf' || file.name.toLowerCase().endsWith('.rtf')) {
+        rtfToText.fromString(fileContent, (err: Error | null, text: string | undefined) => {
+          if (err) {
+            toast.error("Erro ao processar arquivo RTF: " + err.message);
+            console.error("RTF parsing error:", err);
+            return;
+          }
+          setInputText(text || '');
+          toast.success(`Arquivo "${file.name}" importado e formatado.`);
+        });
+      } else {
+        // Para arquivos .txt ou outros tipos de texto
+        setInputText(fileContent);
+        toast.success(`Arquivo "${file.name}" importado.`);
+      }
+    };
+
+    reader.onerror = () => {
+      toast.error("Erro ao ler o arquivo.");
+    };
+
+    reader.readAsText(file);
   };
 
   return (
@@ -205,7 +231,7 @@ const ChordRecognizer = () => {
           onSignOut={handleSignOut}
           newSongTitle={newSongTitle}
           onNewSongTitleChange={setNewSongTitle}
-          onImportFile={handleImportFile} // Passando a nova função
+          onImportFile={handleImportFile}
         />
 
         <ChordViewer
