@@ -163,7 +163,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
         <DialogHeader className="p-4 border-b dark:border-gray-700 flex items-center gap-2">
           {/* Todos os elementos agrupados e alinhados à esquerda */}
           <div className="flex items-center gap-2 relative z-40">
-            {/* Título da música - AGORA NO INÍCIO */}
+            {/* Título da música - AGORA NO INÍCIO DA LINHA */}
             <DialogTitle className="text-xl font-bold min-w-0 truncate">
               {getViewerTitle()}
             </DialogTitle>
