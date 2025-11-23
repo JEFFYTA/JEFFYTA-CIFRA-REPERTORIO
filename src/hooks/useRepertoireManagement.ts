@@ -181,12 +181,8 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
       toast.error("Erro ao atualizar repertório: " + error.message);
       console.error("[handleToggleSongInRepertoire] Erro ao atualizar repertório no Supabase:", error);
     } else {
-      setRepertoires(prev => prev.map(rep => {
-        if (rep.id === selectedRepertoireId) {
-          return { ...rep, songIds: newSongIds };
-        }
-        return rep;
-      }));
+      // Refetch repertoires to ensure the count is updated from the database
+      await fetchRepertoires(); 
 
       const songTitle = songs.find(s => s.id === songId)?.title || "Música";
       const repertoireName = currentRepertoire.name;
@@ -212,5 +208,6 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
     handleDeleteRepertoire,
     handleToggleSongInRepertoire,
     loadingRepertoires,
+    fetchRepertoires, // Expondo fetchRepertoires para uso externo, se necessário
   };
 };
