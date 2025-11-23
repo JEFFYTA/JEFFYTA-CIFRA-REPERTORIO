@@ -126,25 +126,32 @@ export const useSongManagement = ({ initialInputText = '' }: UseSongManagementPr
 
     if (existingSongId) {
       // Update existing song
-      const { error } = await supabase
+      const { error, data: updatedData } = await supabase
         .from('songs')
         .update({
           title: newSongTitle.trim(),
           original_content: inputText,
           extracted_chords: outputText,
-          // updated_at é atualizado automaticamente pelo trigger
+          updated_at: new Date().toISOString(), // Atualizar explicitamente o timestamp
         })
         .eq('id', existingSongId)
-        .eq('user_id', user.user.id);
+        .eq('user_id', user.user.id)
+        .select(); // Selecionar para obter os dados atualizados, incluindo updated_at
 
       if (error) {
         toast.error("Erro ao atualizar música: " + error.message);
         console.error("Erro ao atualizar música:", error);
-      } else {
-        // Update local state
+      } else if (updatedData && updatedData.length > 0) {
+        // Atualizar estado local imediatamente
         setSongs(prev => prev.map(song =>
           song.id === existingSongId
-            ? { ...song, title: newSongTitle.trim(), originalContent: inputText, extractedChords: outputText }
+            ? {
+                ...song,
+                title: updatedData[0].title,
+                originalContent: updatedData[0].original_content,
+                extractedChords: updatedData[0].extracted_chords,
+                updated_at: updatedData[0].updated_at,
+              }
             : song
         ));
         toast.success(`Música "${newSongTitle}" atualizada com sucesso!`);
@@ -231,19 +238,33 @@ export const useSongManagement = ({ initialInputText = '' }: UseSongManagementPr
       return;
     }
 
-    const { error } = await supabase
+    const { error, data: updatedData } = await supabase
       .from('songs')
-      .update({ extracted_chords: newChords }) // updated_at é atualizado automaticamente pelo trigger
+      .update({ extracted_chords: newChords, updated_at: new Date().toISOString() }) // Atualizar explicitamente o timestamp
       .eq('id', songId)
-      .eq('user_id', user.user.id);
+      .eq('user_id', user.user.id)
+      .select(); // Selecionar para obter os dados atualizados, incluindo updated_at
 
     if (error) {
       console.error("Erro ao atualizar cifras da música:", error);
-      toast.error("Erro ao salvar alterações na música: " + error.message); // Exibir toast de erro
-      return; // Retornar em caso de erro para não prosseguir como se tivesse sucesso
+      toast.error("Erro ao salvar alterações na música: " + error.message);
+      return;
     }
-    // Removido o setSongs local aqui.
-    // A atualização do estado será feita pelo fetchSongs que é chamado em ChordViewer.tsx
+
+    // Atualizar estado local imediatamente após o sucesso no banco de dados
+    if (updatedData && updatedData.length > 0) {
+      const updatedSong = updatedData[0];
+      setSongs(prev => prev.map(song =>
+        song.id === songId
+          ? {
+              ...song,
+              extractedChords: updatedSong.extracted_chords,
+              updated_at: updatedSong.updated_at, // Atualizar timestamp local
+            }
+          : song
+      ));
+      toast.success("Alterações salvas automaticamente!"); // Feedback para o usuário
+    }
   };
 
   return {
