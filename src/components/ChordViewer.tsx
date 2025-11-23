@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { ChevronLeft, ChevronRight, Save, X, Search, ZoomIn, ZoomOut, EllipsisVertical, Edit } from 'lucide-react'; // Added Edit icon
+import { ChevronLeft, ChevronRight, Save, X, Search, ZoomIn, ZoomOut, EllipsisVertical } from 'lucide-react'; 
 import { cn } from "@/lib/utils";
 import { Song } from "@/types/song";
 import { transposeChordLine } from "@/lib/chordUtils";
@@ -55,7 +55,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
   const [viewerFontSize, setViewerFontSize] = useState<number>(1.2);
   const [showSearchResults, setShowSearchResults] = useState<boolean>(false);
   const [viewerContent, setViewerContent] = useState<string>('');
-  const [isEditing, setIsEditing] = useState<boolean>(false); // New state for edit mode
+  const [isEditing, setIsEditing] = useState<boolean>(false); // State for edit mode
 
   // Efeito para redefinir configurações do visualizador quando ele abre/fecha
   useEffect(() => {
@@ -222,22 +222,6 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
                   <Save className="mr-2 h-4 w-4" /> Salvar Transposição
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                {/* Toggle Edit Mode */}
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => {
-                  if (isEditing) {
-                    handleSaveDirectEdit(); // Save changes when exiting edit mode
-                  } else {
-                    setIsEditing(true);
-                  }
-                }} disabled={!currentSong}>
-                  {isEditing ? <><Save className="mr-2 h-4 w-4" /> Salvar Edição</> : <><Edit className="mr-2 h-4 w-4" /> Editar Cifras</>}
-                </DropdownMenuItem>
-                {isEditing && (
-                  <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setIsEditing(false)} disabled={!currentSong}>
-                    <X className="mr-2 h-4 w-4" /> Cancelar Edição
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
 
                 {/* Opções de tamanho da fonte - sempre disponíveis */}
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => setViewerFontSize(prev => Math.max(prev - 0.1, 0.8))} disabled={!currentSong}>
@@ -273,14 +257,21 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
               setViewerContent(e.target.value);
               onContentChange(e.target.value); // Call prop to update parent state
             }}
+            onBlur={handleSaveDirectEdit} // Save on blur
             className="flex-1 p-4 font-mono leading-relaxed resize-none border-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
             style={{ fontSize: `${viewerFontSize}rem`, lineHeight: '1.5' }}
+            autoFocus // Automatically focus when entering edit mode
           />
         ) : (
-          <StyledChordDisplay
-            content={getDisplayedContent()} // Use getDisplayedContent for formatted display
-            fontSize={viewerFontSize}
-          />
+          <div 
+            className="flex-1 p-4 cursor-text" // Make it look clickable
+            onClick={() => currentSong && setIsEditing(true)} // Enter edit mode on click
+          >
+            <StyledChordDisplay
+              content={getDisplayedContent()} // Use getDisplayedContent for formatted display
+              fontSize={viewerFontSize}
+            />
+          </div>
         )}
 
         <div className="flex flex-wrap justify-center gap-2 p-4 border-t dark:border-gray-700">
