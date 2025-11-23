@@ -60,7 +60,7 @@ const StyledChordDisplay: React.FC<StyledChordDisplayProps> = ({ content, fontSi
 
   return (
     <pre
-      className="w-full h-full border-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent whitespace-pre-wrap overflow-auto"
+      className="w-full h-full border-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent whitespace-pre-wrap"
       style={{ fontSize: `${fontSize}rem`, lineHeight: '1.5' }}
     >
       {content.split('\n').map((line, index) => renderLine(line, index))}

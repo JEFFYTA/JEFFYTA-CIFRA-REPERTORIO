@@ -264,7 +264,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
           />
         ) : (
           <div 
-            className="flex-1 p-4 cursor-text" // Make it look clickable
+            className="flex-1 p-4 cursor-text overflow-x-auto" // Adicionado overflow-x-auto aqui
             onClick={() => currentSong && setIsEditing(true)} // Enter edit mode on click
           >
             <StyledChordDisplay
