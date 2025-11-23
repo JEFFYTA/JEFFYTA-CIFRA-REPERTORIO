@@ -181,30 +181,11 @@ const ChordRecognizer = () => {
   const handleImportFile = (file: File) => {
     const reader = new FileReader();
 
-    reader.onload = async (e) => { // Adicionado 'async' aqui
+    reader.onload = (e) => {
       const fileContent = e.target?.result as string;
-
-      if (file.type === 'application/rtf' || file.name.toLowerCase().endsWith('.rtf')) {
-        try {
-          const { data, error } = await supabase.functions.invoke('parse-rtf', {
-            body: { rtfContent: fileContent },
-          });
-
-          if (error) {
-            throw error;
-          }
-
-          setInputText(data.plainText || '');
-          toast.success(`Arquivo "${file.name}" importado e formatado.`);
-        } catch (error) {
-          toast.error("Erro ao processar arquivo RTF: " + (error instanceof Error ? error.message : String(error)));
-          console.error("RTF parsing error:", error);
-        }
-      } else {
-        // Para arquivos .txt ou outros tipos de texto
-        setInputText(fileContent);
-        toast.success(`Arquivo "${file.name}" importado.`);
-      }
+      // Agora, apenas arquivos .txt são aceitos, então podemos ler diretamente
+      setInputText(fileContent);
+      toast.success(`Arquivo "${file.name}" importado.`);
     };
 
     reader.onerror = () => {

@@ -75,7 +75,7 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
               ref={fileInputRef}
               onChange={handleFileChange}
               className="hidden"
-              accept=".txt,.rtf" // Aceitar arquivos de texto e RTF
+              accept=".txt" // Aceitar apenas arquivos de texto
             />
             <Button onClick={onSignOut} variant="outline">Sair</Button>
           </div>
