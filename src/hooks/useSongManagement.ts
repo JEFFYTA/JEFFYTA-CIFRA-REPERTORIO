@@ -263,7 +263,7 @@ export const useSongManagement = ({ initialInputText = '' }: UseSongManagementPr
             }
           : song
       ));
-      toast.success("Alterações salvas automaticamente!"); // Feedback para o usuário
+      // Removido: toast.success("Alterações salvas automaticamente!"); // Feedback para o usuário
     }
   };
 
