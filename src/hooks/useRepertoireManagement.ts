@@ -184,13 +184,14 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
       // Refetch repertoires to ensure the count is updated from the database
       await fetchRepertoires(); 
 
-      const songTitle = songs.find(s => s.id === songId)?.title || "Música";
-      const repertoireName = currentRepertoire.name;
-      if (isChecked) {
-        toast.success(`"${songTitle}" adicionada ao repertório "${repertoireName}".`);
-      } else {
-        toast.info(`"${songTitle}" removida do repertório "${repertoireName}".`);
-      }
+      // As mensagens de toast foram removidas conforme solicitado.
+      // const songTitle = songs.find(s => s.id === songId)?.title || "Música";
+      // const repertoireName = currentRepertoire.name;
+      // if (isChecked) {
+      //   toast.success(`"${songTitle}" adicionada ao repertório "${repertoireName}".`);
+      // } else {
+      //   toast.info(`"${songTitle}" removida do repertório "${repertoireName}".`);
+      // }
       console.log("[handleToggleSongInRepertoire] Repertoire updated successfully in Supabase and local state. New songIds:", newSongIds);
     }
   };
