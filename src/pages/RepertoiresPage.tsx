@@ -128,7 +128,7 @@ const RepertoiresPage: React.FC = () => {
 
   return (
     <Sheet open={true} onOpenChange={() => navigate('/')}>
-      <SheetContent side="right" className="w-full max-w-full sm:max-w-md flex flex-col">
+      <SheetContent side="right" className="w-full max-w-full sm:max-w-md flex flex-col h-full">
         <SheetHeader className="flex flex-row items-center justify-between p-4 border-b dark:border-gray-700">
           <Button variant="ghost" onClick={() => navigate(-1)} className="mr-2">
             <ArrowLeft className="h-5 w-5" />
