@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Music, ListMusic, Loader2, ArrowLeft } from 'lucide-react'; // Importar ArrowLeft
+import { Music, ListMusic, Loader2, ArrowLeft } from 'lucide-react';
 import { Song } from "@/types/song";
 import ChordRecognizerCore from "@/components/ChordRecognizerCore";
 import ChordViewer from "@/components/ChordViewer";
@@ -12,11 +12,10 @@ import { useSongManagement } from "@/hooks/useSongManagement";
 import { useRepertoireManagement } from "@/hooks/useRepertoireManagement";
 import { supabase } from "@/integrations/supabase/client";
 import { transposeChordLine } from "@/lib/chordUtils";
-import { useNavigate } from 'react-router-dom'; // Importar useNavigate
-import rtfToText from 'rtf-to-text'; // Importar a biblioteca rtf-to-text
+import { useNavigate } from 'react-router-dom';
 
 const ChordRecognizer = () => {
-  const navigate = useNavigate(); // Inicializar useNavigate
+  const navigate = useNavigate();
   const [isViewerOpen, setIsViewerOpen] = useState<boolean>(false);
   const [isRepertoireViewerActive, setIsRepertoireViewerActive] = useState<boolean>(false);
   const [viewerSearchTerm, setViewerSearchTerm] = useState<string>('');
@@ -182,19 +181,25 @@ const ChordRecognizer = () => {
   const handleImportFile = (file: File) => {
     const reader = new FileReader();
 
-    reader.onload = (e) => {
+    reader.onload = async (e) => { // Adicionado 'async' aqui
       const fileContent = e.target?.result as string;
 
       if (file.type === 'application/rtf' || file.name.toLowerCase().endsWith('.rtf')) {
-        rtfToText.fromString(fileContent, (err: Error | null, text: string | undefined) => {
-          if (err) {
-            toast.error("Erro ao processar arquivo RTF: " + err.message);
-            console.error("RTF parsing error:", err);
-            return;
+        try {
+          const { data, error } = await supabase.functions.invoke('parse-rtf', {
+            body: { rtfContent: fileContent },
+          });
+
+          if (error) {
+            throw error;
           }
-          setInputText(text || '');
+
+          setInputText(data.plainText || '');
           toast.success(`Arquivo "${file.name}" importado e formatado.`);
-        });
+        } catch (error) {
+          toast.error("Erro ao processar arquivo RTF: " + (error instanceof Error ? error.message : String(error)));
+          console.error("RTF parsing error:", error);
+        }
       } else {
         // Para arquivos .txt ou outros tipos de texto
         setInputText(fileContent);
