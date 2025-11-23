@@ -61,22 +61,12 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
     <>
       <Card className="flex-1 flex flex-col shadow-lg">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">Reconhecedor de Cifras</CardTitle>
+          <CardTitle className="text-2xl text-center">Entrada de Música</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col flex-1 p-4">
           <div className="flex flex-wrap gap-2 mb-4 items-center">
-            <label htmlFor="inputMusica" className="font-semibold text-lg">Entrada de Música</label>
+            <label htmlFor="inputMusica" className="font-semibold text-lg">Conteúdo Original</label>
             <Button onClick={onClear} variant="destructive" className="ml-auto">Limpar</Button>
-            <Button onClick={handleFileImportClick} variant="outline">
-              <Upload className="mr-2 h-4 w-4" /> Importar Arquivo
-            </Button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              className="hidden"
-              accept=".txt" // Aceitar apenas arquivos de texto
-            />
             <Button onClick={onSignOut} variant="outline">Sair</Button>
           </div>
           <Textarea
@@ -98,6 +88,16 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
             <Button onClick={() => onTranspose(1)} className="bg-green-600 hover:bg-green-700 text-white">Transpor +1</Button>
             <Button onClick={() => onTranspose(-1)} className="bg-red-600 hover:bg-red-700 text-white">Transpor -1</Button>
             <Button onClick={onRestore} className="bg-blue-600 hover:bg-blue-700 text-white">Restaurar</Button>
+            <Button onClick={handleFileImportClick} variant="outline">
+              <Upload className="mr-2 h-4 w-4" /> Importar Arquivo
+            </Button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept=".txt" // Aceitar apenas arquivos de texto
+            />
             <div className="flex-1 min-w-[150px]"> {/* Adicionado div para o input do título */}
               <Label htmlFor="newSongTitle" className="sr-only">Título da Música</Label>
               <Input
