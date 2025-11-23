@@ -268,12 +268,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Botão de fechar - agora dentro do grupo da esquerda */}
-            <DialogClose asChild>
-              <Button variant="ghost" size="sm" className="p-2">
-                <X className="h-4 w-4" />
-              </Button>
-            </DialogClose>
+            {/* O DialogClose explícito foi removido. O DialogContent padrão fornecerá um botão 'X' no canto superior direito. */}
           </div>
         </DialogHeader>
 
