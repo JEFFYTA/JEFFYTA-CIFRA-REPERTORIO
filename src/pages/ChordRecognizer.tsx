@@ -183,9 +183,19 @@ const ChordRecognizer = () => {
 
     reader.onload = (e) => {
       const fileContent = e.target?.result as string;
-      // Agora, apenas arquivos .txt são aceitos, então podemos ler diretamente
-      setInputText(fileContent);
-      toast.success(`Arquivo "${file.name}" importado.`);
+      
+      // Verificar se o arquivo é um .txt
+      if (file.name.toLowerCase().endsWith('.txt') || file.type === 'text/plain') {
+        setInputText(fileContent);
+        toast.success(`Arquivo "${file.name}" importado.`);
+      } else {
+        // Se não for .txt, exibir uma mensagem de erro e instrução
+        toast.error(
+          "Apenas arquivos de texto simples (.txt) são suportados para importação. " +
+          "Por favor, converta seu arquivo RTF para TXT antes de importar (ex: abra no Bloco de Notas e salve como .txt)."
+        );
+        console.warn("Tentativa de importar arquivo não-TXT:", file.name, file.type);
+      }
     };
 
     reader.onerror = () => {
