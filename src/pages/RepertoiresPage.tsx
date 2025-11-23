@@ -70,7 +70,7 @@ const RepertoiresPage: React.FC = () => {
     }
 
     setIsViewerOpen(true);
-    toast.info(`Abrindo repertório "${rep.name}" em tela cheia.`);
+    // toast.info(`Abrindo repertório "${rep.name}" em tela cheia.`); // Removido
   }, [selectedRepertoireId, repertoires, songs]);
 
   const handleOpenSongSelectionSidebar = useCallback(() => {

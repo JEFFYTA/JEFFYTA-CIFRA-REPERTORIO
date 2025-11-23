@@ -107,10 +107,10 @@ export const useRepertoireManagement = ({ songs }: UseRepertoireManagementProps)
     setSelectedRepertoireId(id);
     if (id) {
       const selectedRep = repertoires.find(rep => rep.id === id);
-      toast.info(`Repertório "${selectedRep?.name}" selecionado.`);
+      // toast.info(`Repertório "${selectedRep?.name}" selecionado.`); // Removido
       console.log("[useRepertoireManagement] Repertoire selected:", selectedRep?.name, "ID:", id);
     } else {
-      toast.info("Nenhum repertório selecionado.");
+      // toast.info("Nenhum repertório selecionado."); // Removido
       console.log("[useRepertoireManagement] No repertoire selected.");
     }
   };
