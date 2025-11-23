@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from "sonner";
 import { extrairCifras, extractSongTitle } from "@/lib/chordUtils";
-import { supabase } from "@/integrations/supabase/client"; // Importar o cliente Supabase
+import { supabase, invokeBatchImportSongs } from "@/integrations/supabase/client"; // Importar o cliente Supabase e a nova função
 import { Song } from "@/types/song"; // Importar o tipo Song
 
 interface UseSongManagementProps {
@@ -267,6 +267,26 @@ export const useSongManagement = ({ initialInputText = '' }: UseSongManagementPr
     }
   };
 
+  const handleBatchSaveSongs = async (songsToSave: { title: string; originalContent: string; extractedChords: string; }[]) => {
+    if (songsToSave.length === 0) {
+      toast.info("Nenhuma música para importar.");
+      return;
+    }
+
+    const loadingToastId = toast.loading(`Importando ${songsToSave.length} músicas...`);
+
+    try {
+      const { message, importedSongs } = await invokeBatchImportSongs(songsToSave);
+      toast.success(message, { id: loadingToastId });
+      fetchSongs(); // Recarregar todas as músicas após a importação em lote
+      return importedSongs;
+    } catch (error) {
+      toast.error("Erro ao importar músicas em lote: " + (error instanceof Error ? error.message : String(error)), { id: loadingToastId });
+      console.error("Erro ao importar músicas em lote:", error);
+      throw error;
+    }
+  };
+
   return {
     inputText,
     setInputText,
@@ -286,5 +306,6 @@ export const useSongManagement = ({ initialInputText = '' }: UseSongManagementPr
     handleUpdateSongChords,
     loadingSongs,
     fetchSongs, // Expondo fetchSongs
+    handleBatchSaveSongs, // Expondo a nova função
   };
 };

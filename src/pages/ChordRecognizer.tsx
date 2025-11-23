@@ -42,6 +42,7 @@ const ChordRecognizer = () => {
     handleUpdateSongChords,
     loadingSongs,
     fetchSongs,
+    handleBatchSaveSongs, // Importar a nova função
   } = useSongManagement({
     initialInputText: ''
   });
@@ -221,7 +222,8 @@ const ChordRecognizer = () => {
           onSignOut={handleSignOut}
           newSongTitle={newSongTitle}
           onNewSongTitleChange={setNewSongTitle}
-          onImportChordsDirectly={handleImportChordsDirectly} // Passar a nova função
+          onImportChordsDirectly={handleImportChordsDirectly}
+          onImportFolder={handleBatchSaveSongs} // Passar a nova função de importação de pasta
         />
 
         <ChordViewer

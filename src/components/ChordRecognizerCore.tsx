@@ -6,8 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Save, Maximize2, Upload } from 'lucide-react'; // Adicionado Upload icon
+import { Save, Maximize2, Upload, FolderOpen } from 'lucide-react'; // Adicionado FolderOpen icon
 import { toast } from "sonner"; // Importar toast
+import { extrairCifras, extractSongTitle } from "@/lib/chordUtils"; // Importar funções de utilidade
 
 interface ChordRecognizerCoreProps {
   inputText: string;
@@ -22,7 +23,8 @@ interface ChordRecognizerCoreProps {
   onSignOut: () => void;
   newSongTitle: string;
   onNewSongTitleChange: (title: string) => void;
-  onImportChordsDirectly: (fileContent: string) => void; // Nova prop para importação direta
+  onImportChordsDirectly: (fileContent: string) => void;
+  onImportFolder: (songs: { title: string; originalContent: string; extractedChords: string; }[]) => Promise<any>; // Nova prop
 }
 
 const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
@@ -38,12 +40,18 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
   onSignOut,
   newSongTitle,
   onNewSongTitleChange,
-  onImportChordsDirectly, // Usar a nova prop
+  onImportChordsDirectly,
+  onImportFolder, // Usar a nova prop
 }) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const folderInputRef = React.useRef<HTMLInputElement>(null); // Nova ref para input de pasta
 
   const handleFileImportClick = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleFolderImportClick = () => {
+    folderInputRef.current?.click();
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,7 +61,7 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
       reader.onload = (e) => {
         const fileContent = e.target?.result as string;
         if (file.name.toLowerCase().endsWith('.txt') || file.type === 'text/plain') {
-          onImportChordsDirectly(fileContent); // Chamar a nova prop com o conteúdo
+          onImportChordsDirectly(fileContent);
           toast.success(`Arquivo "${file.name}" importado para Cifras Organizadas.`);
         } else {
           toast.error(
@@ -71,6 +79,67 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
     // Limpar o valor do input para permitir o upload do mesmo arquivo novamente
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  };
+
+  const handleFolderChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) {
+      toast.info("Nenhum arquivo selecionado na pasta.");
+      return;
+    }
+
+    const songsToProcess: { title: string; originalContent: string; extractedChords: string; }[] = [];
+    let processedCount = 0;
+    let failedCount = 0;
+
+    const processingToastId = toast.loading(`Processando ${files.length} arquivos da pasta...`);
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.name.toLowerCase().endsWith('.txt') || file.type === 'text/plain') {
+        try {
+          const fileContent = await file.text();
+          const title = extractSongTitle(fileContent) || file.name.replace(/\.txt$/, '').trim();
+          const extractedChords = extrairCifras(fileContent);
+
+          songsToProcess.push({
+            title: title,
+            originalContent: fileContent,
+            extractedChords: extractedChords,
+          });
+          processedCount++;
+        } catch (error) {
+          console.error(`Erro ao ler ou processar o arquivo ${file.name}:`, error);
+          failedCount++;
+        }
+      } else {
+        console.warn(`Arquivo ignorado (não é .txt): ${file.name}`);
+        failedCount++;
+      }
+    }
+
+    toast.dismiss(processingToastId);
+
+    if (songsToProcess.length > 0) {
+      try {
+        await onImportFolder(songsToProcess);
+        toast.success(`Importação da pasta concluída. ${songsToProcess.length} músicas importadas.`);
+      } catch (error) {
+        toast.error("Falha na importação em lote da pasta.");
+        console.error("Erro ao importar pasta:", error);
+      }
+    } else {
+      toast.info("Nenhuma música válida encontrada na pasta para importação.");
+    }
+
+    if (failedCount > 0) {
+      toast.warning(`${failedCount} arquivos foram ignorados (não eram .txt ou houve erro de leitura).`);
+    }
+
+    // Limpar o valor do input para permitir o upload da mesma pasta novamente
+    if (folderInputRef.current) {
+      folderInputRef.current.value = '';
     }
   };
 
@@ -113,6 +182,20 @@ const ChordRecognizerCore: React.FC<ChordRecognizerCoreProps> = ({
               ref={fileInputRef}
               onChange={handleFileChange}
               className="hidden"
+              accept=".txt" // Aceitar apenas arquivos de texto
+            />
+            <Button onClick={handleFolderImportClick} variant="outline"> {/* Novo botão */}
+              <FolderOpen className="mr-2 h-4 w-4" /> Importar Pasta
+            </Button>
+            <input
+              type="file"
+              ref={folderInputRef}
+              onChange={handleFolderChange}
+              className="hidden"
+              // @ts-ignore
+              webkitdirectory="" // Atributo para selecionar pasta
+              directory="" // Atributo para selecionar pasta (compatibilidade)
+              multiple // Permitir múltiplos arquivos dentro da pasta
               accept=".txt" // Aceitar apenas arquivos de texto
             />
             <div className="flex-1 min-w-[150px]"> {/* Adicionado div para o input do título */}
