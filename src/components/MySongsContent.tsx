@@ -48,7 +48,8 @@ const MySongsContent: React.FC<MySongsContentProps> = ({
 
   return (
     <div className="flex flex-col flex-1 p-4">
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end items-center gap-2 mb-4"> {/* Adicionado items-center e gap-2 */}
+        <span className="text-sm text-gray-600 dark:text-gray-400">Total de Músicas: {songs.length}</span> {/* Contagem de músicas */}
         <Button
           onClick={onBackupSongs}
           disabled={songs.length === 0}
