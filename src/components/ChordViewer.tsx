@@ -56,6 +56,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
   const [showSearchResults, setShowSearchResults] = useState<boolean>(false);
   const [viewerContent, setViewerContent] = useState<string>('');
   const [isEditing, setIsEditing] = useState<boolean>(false); // State for edit mode
+  const [showSearchInput, setShowSearchInput] = useState<boolean>(false); // Novo estado para controlar a visibilidade do input de busca
 
   // Efeito para redefinir configurações do visualizador quando ele abre/fecha
   useEffect(() => {
@@ -64,6 +65,7 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
     setViewerFontSize(1.2);
     setShowSearchResults(false);
     setIsEditing(false); // Reset edit mode
+    setShowSearchInput(false); // Reset search input visibility
   }, [open]);
 
   // Efeito para inicializar viewerContent quando uma NOVA música é carregada ou o conteúdo da música atual muda
@@ -168,44 +170,67 @@ const ChordViewer: React.FC<ChordViewerProps> = ({
               {getViewerTitle()}
             </DialogTitle>
 
-            {!isRepertoireViewerActive && (
-              <div className="relative w-48"> {/* Largura fixa para o input de busca */}
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400 z-10" />
-                <Input
-                  placeholder="Buscar..."
-                  value={searchTerm}
-                  onChange={handleSearchInputChange}
-                  className="pl-9 w-full relative z-20"
-                  onFocus={() => setShowSearchResults(true)}
-                  onBlur={() => setTimeout(() => setShowSearchResults(false), 100)}
-                />
-                {showSearchResults && searchTerm.trim() !== '' && (
-                  <ScrollArea className="absolute top-full left-0 w-full h-40 border rounded-md bg-background shadow-lg z-30">
-                    <div className="p-2 space-y-1">
-                      {searchResults.length > 0 ? (
-                        searchResults.map((song) => (
-                          <Button
-                            key={song.id}
-                            variant="ghost"
-                            className={cn(
-                              "w-full justify-start",
-                              currentSong?.id === song.id && "bg-accent text-accent-foreground"
-                            )}
-                            onClick={() => {
-                              onSelectViewerSong(song.id);
-                              setShowSearchResults(false);
-                            }}
-                          >
-                            {song.title}
-                          </Button>
-                        ))
-                      ) : (
-                        <p className="text-center text-gray-500 dark:text-gray-400">Nenhuma música encontrada.</p>
-                      )}
-                    </div>
-                  </ScrollArea>
+            {!isRepertoireViewerActive && ( // Esta condição se aplica tanto ao ícone quanto ao input
+              <>
+                {showSearchInput ? (
+                  <div className="relative w-48"> {/* Largura fixa para o input de busca */}
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400 z-10" />
+                    <Input
+                      placeholder="Buscar..."
+                      value={searchTerm}
+                      onChange={handleSearchInputChange}
+                      className="pl-9 w-full relative z-20"
+                      onFocus={() => setShowSearchResults(true)}
+                      onBlur={() => {
+                        // Atrasar o ocultamento do input para permitir o clique nos resultados da busca
+                        setTimeout(() => {
+                          setShowSearchResults(false);
+                          setShowSearchInput(false); // Ocultar o campo de input
+                        }, 200); // Pequeno atraso
+                      }}
+                      autoFocus // Focar automaticamente quando o input aparece
+                    />
+                    {showSearchResults && searchTerm.trim() !== '' && (
+                      <ScrollArea className="absolute top-full left-0 w-full h-40 border rounded-md bg-background shadow-lg z-30">
+                        <div className="p-2 space-y-1">
+                          {searchResults.length > 0 ? (
+                            searchResults.map((song) => (
+                              <Button
+                                key={song.id}
+                                variant="ghost"
+                                className={cn(
+                                  "w-full justify-start",
+                                  currentSong?.id === song.id && "bg-accent text-accent-foreground"
+                                )}
+                                onClick={() => {
+                                  onSelectViewerSong(song.id);
+                                  setShowSearchResults(false);
+                                  setShowSearchInput(false); // Ocultar input após a seleção
+                                }}
+                              >
+                                {song.title}
+                              </Button>
+                            ))
+                          ) : (
+                            <p className="text-center text-gray-500 dark:text-gray-400">Nenhuma música encontrada.</p>
+                          )}
+                        </div>
+                      </ScrollArea>
+                    )}
+                  </div>
+                ) : (
+                  // O botão do ícone de busca
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="p-2"
+                    onClick={() => setShowSearchInput(true)}
+                    title="Buscar música"
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
                 )}
-              </div>
+              </>
             )}
 
             {/* Botões de transposição */}
